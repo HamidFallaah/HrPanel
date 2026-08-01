@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HrPanel.Application\HrPanel.Application.csproj" />
+    <ProjectReference Include="..\HrPanel.Infrastructure\HrPanel.Infrastructure.csproj" />
+    <ProjectReference Include="..\HrPanel.Persistence\HrPanel.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>

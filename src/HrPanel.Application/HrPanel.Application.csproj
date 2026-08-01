@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Dtos\Dashboard\**" />
+    <EmbeddedResource Remove="Dtos\Dashboard\**" />
+    <None Remove="Dtos\Dashboard\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HrPanel.Domain\HrPanel.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\Employments\" />
+    <Folder Include="Features\Assets\" />
+    <Folder Include="Features\Dashboard\" />
+    <Folder Include="Features\Lookups\" />
+    <Folder Include="Features\Scheduling\" />
+    <Folder Include="Features\Organization\" />
+    <Folder Include="Dtos\Assets\" />
+    <Folder Include="Dtos\Employments\" />
+    <Folder Include="Dtos\Lookups\" />
+    <Folder Include="Dtos\Organization\" />
+    <Folder Include="Dtos\Scheduling\" />
+  </ItemGroup>
+
+</Project>
