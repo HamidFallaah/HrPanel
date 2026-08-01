@@ -7,6 +7,8 @@ builder.Services.AddHrPanelModules(builder.Configuration).AddUi();
 
 var app = builder.Build();
 
+await app.Services.SeedIdentityAsync(app.Lifetime.ApplicationStopping);
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -29,7 +31,6 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapControllers();
 

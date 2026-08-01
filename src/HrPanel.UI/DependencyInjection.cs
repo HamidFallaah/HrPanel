@@ -2,6 +2,7 @@ using HrPanel.Application.Common.Abstractions.Services;
 using HrPanel.Application.Common.Authorization;
 using HrPanel.UI.Authorization;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HrPanel.UI;
 
@@ -67,15 +68,32 @@ public static class DependencyInjection
             {
                 policy.RequireAuthenticatedUser();
 
-                policy.RequireRole(
-                    RoleNames.Administrator,
-                    RoleNames.HrStaff);
+                policy.RequireRole(RoleNames.Administrator,RoleNames.HrStaff);
             });
     }
 
     private static void AddMvcServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddAntiforgery(options =>
+        {
+            options.HeaderName = "X-CSRF-TOKEN";
+            options.Cookie.Name ="__Host-HrPanel.Antiforgery";
+
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+            options.Cookie.Path = "/";
+            options.SuppressXFrameOptionsHeader = false;
+        });
+
+        services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+            })
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization();
 
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();

@@ -33,7 +33,7 @@ public static class DependencyInjection
         AddDatabase(services, connectionString);
         AddRepositories(services);
         AddLegacyImportServices(services);
-        AddIdentityServices(services);
+        AddIdentityServices(services, configuration);
 
         return services;
     }
@@ -92,10 +92,14 @@ public static class DependencyInjection
         services.AddScoped<ILegacyOperationalGroupImportService,LegacyOperationalGroupImportService>();
     }
 
-    private static void AddIdentityServices(IServiceCollection services)
+    private static void AddIdentityServices(IServiceCollection services,IConfiguration configuration)
     {
-        services.AddIdentity<ApplicationUser, ApplicationRole>(
-                options =>
+        services.Configure<IdentitySeedOptions>(configuration.GetSection(IdentitySeedOptions.SectionName));
+
+        services.AddScoped<IIdentitySeeder,IdentitySeeder>();
+        services.AddScoped<Application.Common.Abstractions.Services.IAuthenticationService,Identity.AuthenticationService>();
+       
+        services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
                 {
                     ConfigureUserOptions(options);
                     ConfigurePasswordOptions(options);
@@ -103,13 +107,23 @@ public static class DependencyInjection
                     ConfigureSignInOptions(options);
                 })
             .AddEntityFrameworkStores<HrDbContext>()
-            .AddClaimsPrincipalFactory<ApplicationUserClaimsPrincipalFactory>()
+            .AddClaimsPrincipalFactory<
+                ApplicationUserClaimsPrincipalFactory>()
             .AddDefaultTokenProviders();
 
         services.ConfigureApplicationCookie(options =>
         {
-            options.Events.OnRedirectToLogin = context =>HandleCookieRedirect(context,StatusCodes.Status401Unauthorized);
+            options.Cookie.Name = "__Host-HrPanel.Auth";
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            // because SecurePolicy is Always, test the application using its HTTPS address
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
+            options.Cookie.Path = "/";
+            options.ExpireTimeSpan = TimeSpan.FromHours(8);
+            options.SlidingExpiration = true;
+            options.Events.OnRedirectToLogin = context => HandleCookieRedirect(context,StatusCodes.Status401Unauthorized);
             options.Events.OnRedirectToAccessDenied = context => HandleCookieRedirect(context,StatusCodes.Status403Forbidden);
         });
     }
