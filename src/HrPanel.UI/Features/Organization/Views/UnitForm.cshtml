@@ -1,0 +1,12 @@
+﻿@model HrPanel.UI.Models.Organization.OrganizationUnitFormViewModel
+@{
+    var lookups = (OrganizationLookupsDto)ViewBag.Lookups; var edit = Model.Id.HasValue; ViewData[ViewDataKeys.Title] = edit ? "ویرایش واحد" : "واحد جدید"; ViewData[ViewDataKeys.PageTitle] = edit ? "ویرایش واحد سازمانی" : "ثبت واحد سازمانی";
+}
+<partial name="_OrganizationTabs" />
+<div class="content-card form-card"><form asp-action="@(edit?"EditUnit":"CreateUnitFromView")" asp-route-id="@Model.Id" method="post"><div asp-validation-summary="ModelOnly" class="validation-summary"></div><div class="row g-3"><div class="col-md-4"><label class="form-label required">کد</label><input asp-for="Code" class="form-control" dir="ltr" /></div><div class="col-md-4"><label class="form-label required">نام فارسی</label><input asp-for="NameFa" class="form-control" /></div><div class="col-md-4"><label class="form-label">نام انگلیسی</label><input asp-for="NameEn" class="form-control" dir="ltr" /></div><div class="col-md-6"><label class="form-label required">نوع واحد</label><select asp-for="OrganizationUnitTypeId" class="form-select"><option value="0">انتخاب کنید</option>@foreach(var x in lookups.OrganizationUnitTypes){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-6"><label class="form-label">واحد والد</label><select asp-for="ParentOrganizationUnitId" class="form-select"><option value="">ریشه سازمان</option>@foreach(var x in lookups.OrganizationUnits.Where(x=>x.Id!=Model.Id)){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div></div><div class="form-actions"><a class="btn btn-outline-secondary" asp-action="Units">انصراف</a><button class="btn btn-primary">ذخیره</button></div></form></div>

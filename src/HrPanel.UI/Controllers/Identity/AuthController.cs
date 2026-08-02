@@ -1,150 +1,86 @@
-﻿using FluentValidation;
-using HrPanel.Application.Common.Abstractions.Services;
+﻿using HrPanel.Application.Common.Abstractions.Services;
 using HrPanel.Application.Dtos.Identity;
 using HrPanel.UI.Models.Authentication;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace HrPanel.UI.Controllers.Identity;
+namespace HrPanel.UI.Controllers;
 
-[ApiController]
-[Authorize]
-[IgnoreAntiforgeryToken]
-[Route("api/auth")]
-[ResponseCache(Location = ResponseCacheLocation.None,NoStore = true)]
-public sealed class AuthController : ControllerBase
+public sealed class AuthController : Controller
 {
     private readonly IAuthenticationService _authenticationService;
-    private readonly IValidator<LoginRequestDto> _loginValidator;
-    private readonly IValidator<ChangePasswordRequestDto> _changePasswordValidator;
-    private readonly IAntiforgery _antiforgery;
-    public AuthController(IAuthenticationService authenticationService,IValidator<LoginRequestDto> loginValidator,IValidator<ChangePasswordRequestDto> changePasswordValidator, IAntiforgery antiforgery)
+    public AuthController(IAuthenticationService authenticationService)
     {
         _authenticationService = authenticationService;
-        _loginValidator = loginValidator;
-        _changePasswordValidator = changePasswordValidator;
-        _antiforgery = antiforgery;
     }
 
-    [AllowAnonymous]
-    [HttpPost("login")]
-    [ProducesResponseType(typeof(CurrentUserDto),StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ValidationProblemDetails),StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status423Locked)]
-    public async Task<ActionResult<CurrentUserDto>> Login([FromBody] LoginRequestDto request,CancellationToken cancellationToken)
+    [AllowAnonymous, HttpGet("/account/login")]
+    public IActionResult LoginPage(string? returnUrl = null)
     {
-        var validationResult = await _loginValidator.ValidateAsync(request,cancellationToken);
-
-        if (!validationResult.IsValid)
-        {
-            return ValidationProblem(new ValidationProblemDetails(validationResult.ToDictionary()));
-        }
-
-        var result = await _authenticationService.LoginAsync(request,cancellationToken);
-
-        if (result.Succeeded && result.User is not null)
-        {
-            return Ok(result.User);
-        }
-
-        return result.Status switch
-        {
-            LoginStatus.InvalidCredentials => Problem(
-                statusCode: StatusCodes.Status401Unauthorized,
-                title: "ورود ناموفق",
-                detail: "نام کاربری یا رمز عبور صحیح نیست"),
-
-            LoginStatus.LockedOut => Problem(
-                statusCode: StatusCodes.Status423Locked,
-                title: "حساب کاربری قفل شده است",
-                detail:"به دلیل چند تلاش ناموفق، حساب کاربری موقتاً قفل شده است"),
-
-            LoginStatus.NotAllowed => Problem(
-                statusCode: StatusCodes.Status403Forbidden,
-                title: "ورود مجاز نیست",
-                detail: "این حساب در حال حاضر اجازه ورود به سامانه را ندارد"),
-
-            LoginStatus.RequiresTwoFactor => Problem(
-                statusCode: StatusCodes.Status409Conflict,
-                title: "تأیید دومرحله‌ای لازم است",
-                detail: "برای ورود به این حساب، تأیید دومرحله‌ای باید انجام شود"),
-
-            _ => Problem(
-                statusCode: StatusCodes.Status500InternalServerError,
-                title: "خطای ورود",
-                detail: "در هنگام ورود به سامانه خطای غیرمنتظره‌ای رخ داد")
-        };
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Dashboard");
+        return View("Login", new LoginViewModel { ReturnUrl = returnUrl });
     }
 
-    [HttpPost("logout")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+
+    [ValidateAntiForgeryToken]
+    [AllowAnonymous, HttpPost("/account/login")]
+    public async Task<IActionResult> LoginPage(LoginViewModel model, CancellationToken cancellationToken)
     {
-        await _authenticationService.LogoutAsync(cancellationToken);
-
-        return NoContent();
-    }
-
-    [HttpGet("me")]
-    [ProducesResponseType(typeof(CurrentUserDto),StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<CurrentUserDto>> GetCurrentUser(CancellationToken cancellationToken)
-    {
-        var currentUser = await _authenticationService.GetCurrentUserAsync(cancellationToken);
-
-        if (currentUser is null)
+        if (!ModelState.IsValid) return View("Login", model);
+        var result = await _authenticationService.LoginAsync(new LoginRequestDto
         {
-            return Problem(statusCode: StatusCodes.Status401Unauthorized,title: "کاربر احراز هویت نشده است",detail: "ابتدا وارد سامانه شوید");
-        }
-
-        return Ok(currentUser);
-    }
-
-    [HttpPost("change-password")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ValidationProblemDetails),StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request,CancellationToken cancellationToken)
-    {
-        var validationResult = await _changePasswordValidator.ValidateAsync(request,cancellationToken);
-
-        if (!validationResult.IsValid)
-        {
-            return ValidationProblem(new ValidationProblemDetails(validationResult.ToDictionary()));
-        }
-
-        var result = await _authenticationService.ChangePasswordAsync(request,cancellationToken);
-
+            UserName = model.UserName,
+            Password = model.Password,
+            RememberMe = model.RememberMe
+        }, cancellationToken);
         if (result.Succeeded)
         {
-            return NoContent();
+            if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl)) return LocalRedirect(model.ReturnUrl);
+            return RedirectToAction("Index", "Dashboard");
         }
-
-        var errors = result.Errors.Count > 0? result.Errors.ToArray(): ["تغییر رمز عبور انجام نشد"];
-
-        return BadRequest(new ValidationProblemDetails(
-                new Dictionary<string, string[]>
-                {
-                    ["Password"] = errors
-                })
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "تغییر رمز عبور انجام نشد."
-            });
+        ModelState.AddModelError(string.Empty, result.Status switch
+        {
+            LoginStatus.LockedOut => "حساب کاربری موقتاً قفل شده است؛ کمی بعد دوباره تلاش کنید",
+            LoginStatus.NotAllowed => "ورود این حساب مجاز نیست",
+            LoginStatus.RequiresTwoFactor => "این حساب به تأیید دومرحله‌ای نیاز دارد",
+            _ => "نام کاربری یا رمز عبور نادرست است"
+        });
+        return View("Login", model);
     }
 
-    [AllowAnonymous]
-    [HttpGet("csrf-token")]
-    [ProducesResponseType(
-    typeof(CsrfTokenResponse),StatusCodes.Status200OK)]
-    public ActionResult<CsrfTokenResponse> GetCsrfToken()
+
+    [ValidateAntiForgeryToken]
+    [Authorize, HttpPost("/account/logout")]
+    public async Task<IActionResult> LogoutPage(CancellationToken cancellationToken)
     {
-        var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
-        var requestToken = tokens.RequestToken ?? throw new InvalidOperationException("Antiforgery request token was not generated.");
-        return Ok(new CsrfTokenResponse(requestToken));
+        await _authenticationService.LogoutAsync(cancellationToken);
+        return RedirectToAction(nameof(LoginPage));
     }
+
+    [Authorize, HttpGet("/account/change-password")]
+    public IActionResult ChangePasswordPage() => View("ChangePassword", new ChangePasswordViewModel());
+
+
+    [ValidateAntiForgeryToken]
+    [Authorize, HttpPost("/account/change-password")]
+    public async Task<IActionResult> ChangePasswordPage(ChangePasswordViewModel model, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid) return View("ChangePassword", model);
+        var result = await _authenticationService.ChangePasswordAsync(new ChangePasswordRequestDto
+        {
+            CurrentPassword = model.CurrentPassword,
+            NewPassword = model.NewPassword,
+            ConfirmNewPassword = model.ConfirmNewPassword
+        }, cancellationToken);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error);
+            return View("ChangePassword", model);
+        }
+        TempData["SuccessMessage"] = "رمز عبور با موفقیت تغییر کرد";
+        return RedirectToAction(nameof(ChangePasswordPage));
+    }
+
+    [AllowAnonymous, HttpGet("/account/access-denied")]
+    public IActionResult AccessDeniedPage() => View("AccessDenied");
 }

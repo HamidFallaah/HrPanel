@@ -1,0 +1,24 @@
+﻿@using HrPanel.Application.Common.Authorization
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    bool Active(params string[] names) => names.Any(x => string.Equals(x, controller, StringComparison.OrdinalIgnoreCase));
+    var hasHrAccess = User.IsInRole(RoleNames.Administrator) || User.IsInRole(RoleNames.HrStaff);
+}
+<nav class="primary-navigation" aria-label="بخش ‌های سامانه">
+    @if (hasHrAccess)
+    {
+        <div class="navigation-section">
+            <span class="navigation-label">فضای کاری</span>
+            <a class="navigation-link @(Active("Dashboard") ? "is-active" : null)" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-grid-1x2"></i><span>داشبورد</span></a>
+            <a class="navigation-link @(Active("Employees") ? "is-active" : null)" asp-controller="Employees" asp-action="Index"><i class="bi bi-people"></i><span>کارکنان</span></a>
+            <a class="navigation-link @(Active("Employments") ? "is-active" : null)" asp-controller="Employments" asp-action="Index"><i class="bi bi-person-vcard"></i><span>استخدام ‌ها</span></a>
+        </div>
+        <div class="navigation-section">
+            <span class="navigation-label">ساختار و عملیات</span>
+            <a class="navigation-link @(Active("Organization") ? "is-active" : null)" asp-controller="Organization" asp-action="Units"><i class="bi bi-diagram-3"></i><span>سازمان</span></a>
+            <a class="navigation-link @(Active("Scheduling") ? "is-active" : null)" asp-controller="Scheduling" asp-action="Shifts"><i class="bi bi-calendar3"></i><span>شیفت و برنامه کاری</span></a>
+            <a class="navigation-link @(Active("Assets") ? "is-active" : null)" asp-controller="Assets" asp-action="Index"><i class="bi bi-phone"></i><span>دارایی‌ها</span></a>
+            <a class="navigation-link @(Active("Lookups") ? "is-active" : null)" asp-controller="Lookups" asp-action="Index"><i class="bi bi-collection"></i><span>اطلاعات پایه</span></a>
+        </div>
+    }
+</nav>

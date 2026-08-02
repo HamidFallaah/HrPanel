@@ -1,0 +1,32 @@
+﻿@model PagedResult<EmployeeListItemDto>
+@{
+    ViewData[ViewDataKeys.Title] = "کارکنان"; ViewData[ViewDataKeys.PageTitle] = "کارکنان"; ViewData[ViewDataKeys.PageDescription] = "جست‌وجو و مدیریت پرونده کارکنان سازمان"; var search = ViewBag.Search as string; bool? active = ViewBag.IsActive;
+}
+<div class="page-actions"><a class="btn btn-primary" asp-action="Create"><i class="bi bi-person-plus"></i> ثبت کارمند</a></div>
+<section class="content-card">
+    <form method="get" class="filter-bar">
+        <div class="filter-search"><i class="bi bi-search"></i><input class="form-control" name="search" value="@search" placeholder="نام، شماره پرسنلی یا کد ملی" /></div>
+        <select class="form-select" name="isActive"><option value="">همه وضعیت‌ها</option><option value="true" selected="@(active == true)">فعال</option><option value="false" selected="@(active == false)">غیرفعال</option></select>
+        <button class="btn btn-dark" type="submit">اعمال فیلتر</button><a class="btn btn-outline-secondary" asp-action="Index">پاک‌کردن</a>
+    </form>
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_EmptyState" model='new EmptyStateViewModel("کارمندی یافت نشد", "فیلترها را تغییر دهید یا نخستین کارمند را ثبت کنید", "bi-people", "ثبت کارمند", Url.Action("Create"))' />
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table">
+                <thead><tr><th>کارمند</th><th>شماره پرسنلی</th><th>کد ملی</th><th>وضعیت</th><th class="text-end">عملیات</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var name = $"{item.FirstNameFa} {item.LastNameFa}".Trim();
+                        <tr><td><div class="person-cell"><span class="list-avatar">@(string.IsNullOrWhiteSpace(name) ? "؟" : name.First())</span><span><strong>@(string.IsNullOrWhiteSpace(name) ? "بدون نام" : name)</strong><small>@($"{item.FirstName} {item.LastName}".Trim())</small></span></div></td><td dir="ltr">@item.EmployeeNumber</td><td dir="ltr">@(item.NationalCode ?? "—")</td><td><span class="status-badge @(item.IsActive ? "status-active" : "status-inactive")">@(item.IsActive ? "فعال" : "غیرفعال")</span></td><td class="text-end"><a class="btn btn-sm btn-outline-dark" asp-action="Details" asp-route-id="@item.Id">مشاهده پرونده</a></td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-bar"><span>نمایش <b data-persian-number>@Model.Items.Count</b> از <b data-persian-number>@Model.TotalCount</b></span><nav><ul class="pagination mb-0"><li class="page-item @(!Model.HasPreviousPage ? "disabled" : null)"><a class="page-link" asp-route-search="@search" asp-route-isActive="@active" asp-route-page="@(Model.PageNumber - 1)">قبلی</a></li><li class="page-item active"><span class="page-link" data-persian-number>@Model.PageNumber</span></li><li class="page-item @(!Model.HasNextPage ? "disabled" : null)"><a class="page-link" asp-route-search="@search" asp-route-isActive="@active" asp-route-page="@(Model.PageNumber + 1)">بعدی</a></li></ul></nav></div>
+    }
+</section>

@@ -1,0 +1,31 @@
+﻿@model HrPanel.UI.Models.ReferenceData.ReferenceDataViewModel
+@{
+    ViewData[ViewDataKeys.Title] = "اطلاعات پایه"; ViewData[ViewDataKeys.PageTitle] = "اطلاعات پایه"; ViewData[ViewDataKeys.PageDescription] = "مقادیر مرجع فعال سامانه؛ ویرایش این داده‌ها در این نسخه ارائه نشده است.";
+}
+<div class="reference-grid">
+    @{
+        var groups = new[] { ("انواع استخدام", Model.Employments.EmploymentTypes), ("وضعیت‌های استخدام", Model.Employments.EmploymentStatuses), ("انواع ساعت کاری", Model.Employments.WorkTimeTypes), ("انواع واحد سازمانی", Model.Organization.OrganizationUnitTypes), ("سطوح شغلی", Model.Organization.JobLevels), ("انواع دارایی", Model.Assets.AssetTypes), ("شیفت‌های فعال", Model.Scheduling.Shifts), ("برنامه‌های کاری فعال", Model.Scheduling.WorkSchedules) };
+    }
+    @foreach (var group in groups)
+    {
+        <section class="content-card reference-card"><div class="card-heading"><h2>@group.Item1</h2><span class="count-pill" data-persian-number>@group.Item2.Count</span></div>@if(group.Item2.Count==0){
+        <p class="muted mb-0">موردی ثبت نشده است.</p>
+    }else
+    {
+
+        <ul>@foreach(var x in group.Item2){
+        <li><span>@x.DisplayName</span><code>@x.Code</code></li>
+    }
+</ul>
+        }
+</section>
+        }
+    <section class="content-card reference-card"><div class="card-heading"><h2>مقادیر فردی</h2></div><div class="tag-list">@foreach(var x in Model.Employees.Genders.Concat(Model.Employees.MaritalStatuses).Concat(Model.Employees.ContactTypes).Concat(Model.Employees.IdentifierTypes).Concat(Model.Employees.DependentRelationshipTypes)){
+    <span>@x.DisplayName</span>
+        }
+</div></section>
+    <section class="content-card reference-card"><div class="card-heading"><h2>الگوها و وضعیت ‌ها</h2></div><div class="tag-list">@foreach(var x in Model.Scheduling.WorkSchedulePatternTypes.Concat(Model.Assets.AssetStatuses).Concat(Model.Organization.OperationalGroupTypes)){
+    <span>@x.DisplayName</span>
+        }
+</div></section>
+</div>

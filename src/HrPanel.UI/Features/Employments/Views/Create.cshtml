@@ -1,0 +1,24 @@
+﻿@model HrPanel.UI.Models.Employments.StartEmploymentViewModel
+@{
+    var employees = (IReadOnlyCollection<EmployeeListItemDto>)ViewBag.Employees; var lookups = (EmploymentLookupsDto)ViewBag.Lookups; ViewData[ViewDataKeys.Title] = "شروع استخدام"; ViewData[ViewDataKeys.PageTitle] = "شروع استخدام جدید"; ViewData[ViewDataKeys.PageDescription] = "کارمند و اطلاعات قرارداد اولیه را مشخص کنید";
+}
+<div class="content-card form-card">
+    <form asp-action="Create" method="post" data-prevent-double-submit>
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div class="form-section"><div class="form-section-heading"><i class="bi bi-person-check"></i><div><h2>انتخاب کارمند</h2><p>برای محدودکردن فهرست، نام یا شماره پرسنلی را جست‌وجو کنید.</p></div></div><div class="row g-3"><div class="col-md-8"><label class="form-label required">کارمند</label><select asp-for="EmployeeId" class="form-select"><option value="0">انتخاب کنید</option>@foreach(var item in employees){
+        <option value="@item.Id">@($"{item.FirstNameFa} {item.LastNameFa}") — @item.EmployeeNumber</option>
+                }
+</select><span asp-validation-for="EmployeeId"></span></div><div class="col-md-4"><label class="form-label">جست‌وجوی فهرست</label><div class="input-group"><input asp-for="EmployeeSearch" class="form-control" /><button class="btn btn-outline-dark" formmethod="get" formaction="@Url.Action("Create")">جست‌وجو</button></div></div></div></div>
+        <div class="form-section"><div class="form-section-heading"><i class="bi bi-briefcase"></i><div><h2>اطلاعات استخدام</h2></div></div><div class="row g-3"><div class="col-md-4"><label class="form-label required">نوع استخدام</label><select asp-for="EmploymentTypeId" class="form-select"><option value="0">انتخاب کنید</option>@foreach(var item in lookups.EmploymentTypes){
+        <option value="@item.Id">@item.DisplayName</option>
+                }
+</select></div><div class="col-md-4"><label class="form-label required">وضعیت</label><select asp-for="EmploymentStatusId" class="form-select"><option value="0">انتخاب کنید</option>@foreach(var item in lookups.EmploymentStatuses){
+        <option value="@item.Id">@item.DisplayName</option>
+                }
+</select></div><div class="col-md-4"><label class="form-label">نوع ساعت کاری</label><select asp-for="WorkTimeTypeId" class="form-select"><option value="">بدون انتخاب</option>@foreach(var item in lookups.WorkTimeTypes){
+        <option value="@item.Id">@item.DisplayName</option>
+                }
+</select></div><div class="col-md-4"><label class="form-label required">تاریخ شروع</label><input asp-for="StartDate" class="form-control" data-jdp autocomplete="off" /><span asp-validation-for="StartDate"></span></div><div class="col-md-4"><label class="form-label">مدت قرارداد (ماه)</label><input asp-for="ContractTermMonths" class="form-control" inputmode="numeric" /></div></div></div>
+        <div class="form-actions"><a class="btn btn-outline-secondary" asp-action="Index">انصراف</a><button class="btn btn-primary">شروع استخدام</button></div>
+    </form>
+</div>

@@ -1,0 +1,149 @@
+﻿@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@{
+    var pageTitle = ViewData[ViewDataKeys.Title] as string ?? "سامانه منابع انسانی";
+    var requestTokens = Antiforgery.GetAndStoreTokens(Context);
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var userName = isAuthenticated
+        ? User.Identity?.Name ?? "کاربر سامانه"
+        : "حالت پیش‌ نمایش";
+}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f8c900" />
+    <meta name="csrf-token" content="@requestTokens.RequestToken" />
+    <title>@pageTitle | سامانه منابع انسانی شایا</title>
+
+    <link rel="icon" type="image/webp" href="~/images/shaya-logo.webp" />
+    <link rel="stylesheet" href="~/fonts/vazirmatn/vazirmatn.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.rtl.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/sweetalert2/sweetalert2.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/jalalidatepicker/jalalidatepicker.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="app-body">
+    <a class="skip-link" href="#main-content">رفتن به محتوای اصلی</a>
+
+    <div class="app-shell" data-app-shell>
+        <aside class="app-sidebar d-none d-lg-flex" id="app-sidebar" aria-label="ناوبری اصلی">
+            <div class="sidebar-brand">
+                <a class="brand-link" asp-controller="Dashboard" asp-action="Index" aria-label="سامانه منابع انسانی شایا - داشبورد">
+                    <img class="brand-logo" src="~/images/shaya-logo.webp" alt="نشان شایا" width="52" height="52" />
+                    <span class="brand-copy">
+                        <strong>منابع انسانی شایا</strong>
+                        <small>پنل مدیریت سازمانی</small>
+                    </span>
+                </a>
+            </div>
+
+            <div class="sidebar-scroll">
+                <partial name="_PrimaryNavigation" />
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="sidebar-collapse-button" type="button" data-sidebar-toggle aria-controls="app-sidebar" aria-expanded="true">
+                    <i class="bi bi-layout-sidebar-inset-reverse" aria-hidden="true"></i>
+                    <span>جمع‌کردن منو</span>
+                </button>
+            </div>
+        </aside>
+
+        <div class="app-workspace">
+            <header class="app-header">
+                <div class="header-leading">
+                    <button class="icon-button d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobile-navigation" aria-controls="mobile-navigation" aria-label="بازکردن منوی اصلی">
+                        <i class="bi bi-list" aria-hidden="true"></i>
+                    </button>
+
+                    <div class="header-title-wrap">
+                        <span class="header-eyebrow">سامانه منابع انسانی شایا</span>
+                        <strong class="header-page-title">@(ViewData[ViewDataKeys.PageTitle] as string ?? pageTitle)</strong>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="dropdown">
+                        <button class="user-menu-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="نمایش منوی کاربر">
+                            <span class="user-avatar" aria-hidden="true">
+                                <i class="bi @(isAuthenticated ? "bi-person-check" : "bi-person")"></i>
+                            </span>
+                            <span class="user-copy d-none d-sm-flex">
+                                <strong>@userName</strong>
+                                <small>@(isAuthenticated ? "کاربر سامانه" : "بدون ورود")</small>
+                            </span>
+                            <i class="bi bi-chevron-down user-menu-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end user-dropdown">
+                            <div class="user-dropdown-summary">
+                                <span class="user-avatar user-avatar-lg" aria-hidden="true">
+                                    <i class="bi @(isAuthenticated ? "bi-person-check" : "bi-person")"></i>
+                                </span>
+                                <span>
+                                    <strong>@userName</strong>
+                                    <small>@(isAuthenticated ? "نشست فعال" : "بدون ورود")</small>
+                                </span>
+                            </div>
+                            @if (isAuthenticated)
+                            {
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" asp-controller="Auth" asp-action="ChangePasswordPage">
+                                    <i class="bi bi-key"></i> تغییر رمز عبور
+                                </a>
+                                <form asp-controller="Auth" asp-action="LogoutPage" method="post">
+                                    <button class="dropdown-item text-danger" type="submit">
+                                        <i class="bi bi-box-arrow-left"></i> خروج از سامانه
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="app-main" id="main-content" tabindex="-1">
+                <div class="content-container">
+                    <partial name="_PageHeader" />
+                    <partial name="_FlashMessages" />
+                    @RenderBody()
+                </div>
+            </main>
+
+            <footer class="app-footer">
+                <span>سامانه داخلی منابع انسانی شایا</span>
+                <span class="footer-separator" aria-hidden="true"></span>
+                <span>نسخه رابط کاربری ۱٫۰</span>
+            </footer>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end mobile-navigation" tabindex="-1" id="mobile-navigation" aria-labelledby="mobile-navigation-title">
+        <div class="offcanvas-header">
+            <a class="brand-link" asp-controller="Dashboard" asp-action="Index">
+                <img class="brand-logo" src="~/images/shaya-logo.webp" alt="نشان شایا" width="48" height="48" />
+                <span class="brand-copy">
+                    <strong id="mobile-navigation-title">منابع انسانی شایا</strong>
+                    <small>پنل مدیریت سازمانی</small>
+                </span>
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="بستن منو"></button>
+        </div>
+        <div class="offcanvas-body">
+            <partial name="_PrimaryNavigation" />
+        </div>
+    </div>
+
+    <div class="visually-hidden" id="app-live-region" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js" asp-append-version="true"></script>
+    <script src="~/lib/jalalidatepicker/jalalidatepicker.min.js" asp-append-version="true"></script>
+    <script src="~/js/app.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

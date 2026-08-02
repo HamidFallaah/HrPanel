@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace HrPanel.UI.Models.Assets;
-public sealed class AssetFormViewModel
+public sealed class AssetViewModels
 {
     public long? Id { get; set; }
     [Range(1, short.MaxValue, ErrorMessage = "نوع دارایی را انتخاب کنید")] public short AssetTypeId { get; set; }

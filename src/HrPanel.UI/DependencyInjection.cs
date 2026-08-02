@@ -1,6 +1,7 @@
 using HrPanel.Application.Common.Abstractions.Services;
 using HrPanel.Application.Common.Authorization;
 using HrPanel.UI.Authorization;
+using HrPanel.UI.Ui;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -88,14 +89,16 @@ public static class DependencyInjection
             options.SuppressXFrameOptionsHeader = false;
         });
 
-        services.AddControllersWithViews(options =>
-            {
-                options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-            })
-            .AddViewLocalization()
-            .AddDataAnnotationsLocalization();
+        services
+       .AddControllersWithViews()
+       .AddRazorOptions(options =>
+       {
+           options.ViewLocationExpanders.Add(new FeatureViewLocationExpander());
+       })
+       .AddViewLocalization()
+       .AddDataAnnotationsLocalization();
 
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen();
+        //services.AddEndpointsApiExplorer();
+        //services.AddSwaggerGen();
     }
 }

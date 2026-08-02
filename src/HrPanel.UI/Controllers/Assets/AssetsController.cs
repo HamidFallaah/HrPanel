@@ -44,12 +44,12 @@ public sealed class AssetsController : Controller
     public async Task<IActionResult> Create(CancellationToken cancellationToken) 
     { 
         ViewBag.Lookups = await _lookupService.GetAssetLookupsAsync(cancellationToken); 
-        return View("Form", new AssetFormViewModel());
+        return View("Form", new AssetViewModels());
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost("/assets/create")]
-    public async Task<IActionResult> Create(AssetFormViewModel model, CancellationToken cancellationToken) 
+    public async Task<IActionResult> Create(AssetViewModels model, CancellationToken cancellationToken) 
     { 
         if (!ModelState.IsValid) 
         { 
@@ -72,12 +72,12 @@ public sealed class AssetsController : Controller
         var result = await _service.GetAssetAsync(id, cancellationToken); 
         if (result.IsFailure) return NotFound(); 
         var x = result.Value; ViewBag.Lookups = await _lookupService.GetAssetLookupsAsync(cancellationToken); 
-        return View("Form", new AssetFormViewModel { Id = id, AssetTypeId = x.AssetTypeId, AssetTag = x.AssetTag, ServiceNumber = x.ServiceNumber, Imei = x.Imei, SerialNumber = x.SerialNumber, Notes = x.Notes }); 
+        return View("Form", new AssetViewModels { Id = id, AssetTypeId = x.AssetTypeId, AssetTag = x.AssetTag, ServiceNumber = x.ServiceNumber, Imei = x.Imei, SerialNumber = x.SerialNumber, Notes = x.Notes }); 
     }
 
     [ValidateAntiForgeryToken]
     [HttpPost("/assets/{id:long}/edit")]
-    public async Task<IActionResult> Edit(long id, AssetFormViewModel model, CancellationToken cancellationToken) 
+    public async Task<IActionResult> Edit(long id, AssetViewModels model, CancellationToken cancellationToken) 
     { 
         model.Id = id; 
         if (!ModelState.IsValid) 
@@ -148,7 +148,7 @@ public sealed class AssetsController : Controller
         Message(result, "دارایی به‌عنوان مفقود ثبت شد"); 
         return Back(id); 
     }
-    private static CreateAssetDto ToCreate(AssetFormViewModel x) => new() 
+    private static CreateAssetDto ToCreate(AssetViewModels x) => new() 
     { 
         AssetTypeId = x.AssetTypeId, AssetTag = x.AssetTag, ServiceNumber = x.ServiceNumber, Imei = x.Imei, SerialNumber = x.SerialNumber, Notes = x.Notes };
     private IActionResult BadDate(long id) 

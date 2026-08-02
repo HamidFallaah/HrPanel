@@ -1,0 +1,15 @@
+﻿@model HrPanel.UI.Models.Employees.CreateEmployeeViewModel
+@{
+    ViewData[ViewDataKeys.Title] = "ثبت کارمند"; ViewData[ViewDataKeys.PageTitle] = "ثبت کارمند جدید"; ViewData[ViewDataKeys.PageDescription] = "اطلاعات پایه پرونده را وارد کنید؛ سایر سوابق پس از ثبت قابل تکمیل‌ اند";
+}
+<div class="content-card form-card">
+    <form asp-action="Create" method="post" data-prevent-double-submit>
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+        <div class="form-section">
+            <div class="form-section-heading"><i class="bi bi-person-badge"></i><div><h2>مشخصات پایه</h2><p>فیلدهای ستاره‌دار الزامی هستند.</p></div></div>
+            <div class="row g-3"><div class="col-md-4"><label asp-for="EmployeeNumber" class="form-label required"></label><input asp-for="EmployeeNumber" class="form-control" dir="ltr" /><span asp-validation-for="EmployeeNumber"></span></div><div class="col-md-4"><label asp-for="NationalCode" class="form-label"></label><input asp-for="NationalCode" class="form-control" inputmode="numeric" dir="ltr" /><span asp-validation-for="NationalCode"></span></div></div>
+            <div class="row g-3 mt-1"><div class="col-md-6"><label asp-for="FirstNameFa" class="form-label required"></label><input asp-for="FirstNameFa" class="form-control" /><span asp-validation-for="FirstNameFa"></span></div><div class="col-md-6"><label asp-for="LastNameFa" class="form-label required"></label><input asp-for="LastNameFa" class="form-control" /><span asp-validation-for="LastNameFa"></span></div><div class="col-md-6"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control" dir="ltr" /></div><div class="col-md-6"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control" dir="ltr" /></div></div>
+        </div>
+        <div class="form-actions"><a class="btn btn-outline-secondary" asp-action="Index">انصراف</a><button class="btn btn-primary" type="submit">ثبت و بازکردن پرونده</button></div>
+    </form>
+</div>

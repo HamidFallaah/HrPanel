@@ -96,12 +96,14 @@ public sealed class EmployeeRepository : IEmployeeRepository
 
         return PagedResult<EmployeeListItemDto>.Create(employees, request.PageNumber,request.PageSize,totalCount);
     }
-
     public void Add(Employee employee)
     {
         _dbContext.Employees.Add(employee);
     }
-
+    public void UpdatePersonalDetails(EmployeePersonalDetails personalDetails)
+    {
+        _dbContext.EmployeePersonalDetails.Update(personalDetails);
+    }
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.SaveChangesAsync(cancellationToken);

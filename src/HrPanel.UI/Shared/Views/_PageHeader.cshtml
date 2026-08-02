@@ -1,0 +1,51 @@
+﻿@{
+    var pageTitle = ViewData[ViewDataKeys.PageTitle] as string;
+    var pageDescription = ViewData[ViewDataKeys.PageDescription] as string;
+    var breadcrumbs = ViewData[ViewDataKeys.Breadcrumbs] as IReadOnlyList<BreadcrumbItemViewModel>
+        ?? Array.Empty<BreadcrumbItemViewModel>();
+    if (breadcrumbs.Count == 0 && !string.IsNullOrWhiteSpace(pageTitle))
+    {
+        breadcrumbs = new[] { new BreadcrumbItemViewModel(pageTitle) };
+    }
+}
+<div class="page-heading">
+    <nav class="page-breadcrumbs" aria-label="مسیر صفحه">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a asp-controller="Dashboard" asp-action="Index" aria-label="داشبورد">
+                    <i class="bi bi-house-door" aria-hidden="true"></i>
+                </a>
+            </li>
+            @foreach (var item in breadcrumbs)
+            {
+                if (string.IsNullOrWhiteSpace(item.Url))
+                {
+                    <li class="breadcrumb-item active" aria-current="page">
+                        @if (!string.IsNullOrWhiteSpace(item.Icon))
+                        {
+                            <i class="bi @item.Icon" aria-hidden="true"></i>
+                        }
+                        @item.Text
+                    </li>
+                }
+                else
+                {
+                    <li class="breadcrumb-item">
+                        <a href="@item.Url">@item.Text</a>
+                    </li>
+                }
+            }
+        </ol>
+    </nav>
+
+    @if (!string.IsNullOrWhiteSpace(pageTitle))
+    {
+        <div class="page-heading-copy">
+            <h1>@pageTitle</h1>
+            @if (!string.IsNullOrWhiteSpace(pageDescription))
+            {
+                <p>@pageDescription</p>
+            }
+        </div>
+    }
+</div>

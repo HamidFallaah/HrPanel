@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using HrPanel.Application.Common.Abstractions.Persistence;
+using HrPanel.Application.Common.Abstractions.Services;
+using HrPanel.Application.Dtos.Dashboard;
 
-namespace HrPanel.Application.Features.Dashboard
+namespace HrPanel.Application.Features.Dashboard;
+
+internal sealed class DashboardService(IDashboardRepository repository,IDateTimeProvider dateTimeProvider) : IDashboardService
 {
-    internal class DashboardService
-    {
-    }
+    public Task<DashboardDto> GetAsync(CancellationToken cancellationToken = default) => repository.GetAsync(dateTimeProvider.Now.AddDays(-30), cancellationToken);
 }

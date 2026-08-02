@@ -1,0 +1,23 @@
+﻿@{
+    var messages = new[]
+    {
+        new { Key = "Success", AlternateKey = "SuccessMessage", Css = "success", Icon = "bi-check-circle", DefaultTitle = "عملیات موفق" },
+        new { Key = "Error", AlternateKey = "ErrorMessage", Css = "danger", Icon = "bi-exclamation-octagon", DefaultTitle = "خطا" },
+        new { Key = "Warning", AlternateKey = "WarningMessage", Css = "warning", Icon = "bi-exclamation-triangle", DefaultTitle = "توجه" },
+        new { Key = "Info", AlternateKey = "InfoMessage", Css = "info", Icon = "bi-info-circle", DefaultTitle = "اطلاع" }
+    };
+}
+<div class="flash-message-stack" aria-live="polite">
+    @foreach (var item in messages)
+    {
+        var message = TempData[item.Key] as string ?? TempData[item.AlternateKey] as string;
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="alert alert-@item.Css alert-dismissible app-alert fade show" role="alert">
+                <i class="bi @item.Icon" aria-hidden="true"></i>
+                <span><strong>@item.DefaultTitle:</strong> @message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="بستن پیام"></button>
+            </div>
+        }
+    }
+</div>

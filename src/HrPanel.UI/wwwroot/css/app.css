@@ -1455,3 +1455,16 @@ input[type="tel"] {
     .form-actions .btn { width: 100%; }
     .auth-card { padding: 1.35rem; }
 }
+jdp-container {
+    z-index: 100000 !important;
+}
+
+jdp-overlay {
+    z-index: 99999 !important;
+}
+
+.modal-dialog,
+.modal-content,
+.modal-body {
+    overflow: visible !important;
+}

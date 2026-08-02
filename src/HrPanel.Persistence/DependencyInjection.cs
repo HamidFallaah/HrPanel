@@ -74,6 +74,8 @@ public static class DependencyInjection
         services.AddScoped<IAssetRepository,AssetRepository>();
 
         services.AddScoped<ILookupRepository,LookupRepository>();
+        
+        services.AddScoped<IDashboardRepository,DashboardRepository>();
     }
     private static void AddLegacyImportServices(IServiceCollection services)
     {
@@ -113,6 +115,9 @@ public static class DependencyInjection
 
         services.ConfigureApplicationCookie(options =>
         {
+            options.LoginPath = "/account/login";
+            options.AccessDeniedPath = "/account/access-denied";
+            options.ReturnUrlParameter = "returnUrl";
             options.Cookie.Name = "__Host-HrPanel.Auth";
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;

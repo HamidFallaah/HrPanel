@@ -21,16 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Assets\Views\" />
-    <Folder Include="Features\Authentication\Views\" />
-    <Folder Include="Features\Dashboard\Views\" />
-    <Folder Include="Features\Employees\Views\" />
-    <Folder Include="Features\Employments\Views\" />
-    <Folder Include="Features\Organization\Views\" />
-    <Folder Include="Features\ReferenceData\Views\" />
     <Folder Include="Features\Scheduling\Views\" />
-    <Folder Include="Features\Shared\Views\" />
-    <Folder Include="Shared\Views\" />
   </ItemGroup>
 
 </Project>

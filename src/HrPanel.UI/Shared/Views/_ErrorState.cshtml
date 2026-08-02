@@ -1,0 +1,17 @@
+﻿@model ErrorStateViewModel
+
+<div class="state-card error-state" role="alert">
+    <span class="state-icon" aria-hidden="true">
+        <i class="bi bi-cloud-slash"></i>
+    </span>
+
+    <h2>@Model.Title</h2>
+    <p>@Model.Message</p>
+
+    @if (Model.CanRetry)
+    {
+        <button class="btn btn-outline-dark" type="button"data-retry-page>
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>تلاش دوباره
+        </button>
+    }
+</div>

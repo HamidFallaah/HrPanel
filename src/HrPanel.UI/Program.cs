@@ -11,20 +11,17 @@ await app.Services.SeedIdentityAsync(app.Lifetime.ApplicationStopping);
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json","HR Panel API v1");
-    });
+    app.UseDeveloperExceptionPage();
 }
 else
 {
+    app.UseExceptionHandler("/error");
     app.UseHsts();
 }
 
-app.UseExceptionHandler("/error");
+app.UseStatusCodePagesWithReExecute("/error/{0}");
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseRequestLocalization();
 app.UseRouting();
@@ -33,5 +30,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

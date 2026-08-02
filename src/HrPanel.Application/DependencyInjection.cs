@@ -7,6 +7,7 @@ using HrPanel.Application.Features.Lookups;
 using HrPanel.Application.Features.Organization;
 using HrPanel.Application.Features.Scheduling;
 using Microsoft.Extensions.DependencyInjection;
+using HrPanel.Application.Features.Dashboard;
 
 namespace HrPanel.Application;
 
@@ -24,7 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IOrganizationService, OrganizationService>();
         services.AddScoped<ISchedulingService, SchedulingService>();
         services.AddScoped<IAssetService, AssetService>();
-
+        services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<ILegacyImportService, LegacyImportService>();
 
         return services;

@@ -1,0 +1,4 @@
+﻿@{
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+<ul class="nav module-tabs"><li><a class="@(action.Contains("Unit") || action == "Units" ? "active" : null)" asp-action="Units">واحدهای سازمانی</a></li><li><a class="@(action.Contains("Position") ? "active" : null)" asp-action="Positions">سمت ‌ها</a></li><li><a class="@(action.Contains("Location") ? "active" : null)" asp-action="Locations">محل ‌های کار</a></li><li><a class="@(action.Contains("Group") ? "active" : null)" asp-action="Groups">گروه‌های عملیاتی</a></li></ul>
