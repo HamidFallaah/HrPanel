@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Dtos\Dashboard\**" />
-    <EmbeddedResource Remove="Dtos\Dashboard\**" />
-    <None Remove="Dtos\Dashboard\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
@@ -24,7 +18,6 @@
   <ItemGroup>
     <Folder Include="Features\Employments\" />
     <Folder Include="Features\Assets\" />
-    <Folder Include="Features\Dashboard\" />
     <Folder Include="Features\Lookups\" />
     <Folder Include="Features\Scheduling\" />
     <Folder Include="Features\Organization\" />

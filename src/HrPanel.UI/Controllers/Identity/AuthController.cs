@@ -10,6 +10,7 @@ namespace HrPanel.UI.Controllers.Identity;
 
 [ApiController]
 [Authorize]
+[IgnoreAntiforgeryToken]
 [Route("api/auth")]
 [ResponseCache(Location = ResponseCacheLocation.None,NoStore = true)]
 public sealed class AuthController : ControllerBase
