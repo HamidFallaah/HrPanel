@@ -1,0 +1,17 @@
+﻿@model PagedResult<ShiftDto>
+@{
+    ViewData[ViewDataKeys.Title] = "شیفت‌ها"; ViewData[ViewDataKeys.PageTitle] = "شیفت ‌های کاری"; ViewData[ViewDataKeys.PageDescription] = "تعریف بازه زمانی و ساعت کار شیفت ‌ها";
+}
+<partial name="_SchedulingTabs" />
+<div class="page-actions"><a class="btn btn-primary" asp-action="CreateShift">شیفت جدید</a></div>
+<section class="content-card"><form class="filter-bar"><div class="filter-search"><i class="bi bi-search"></i><input name="search" value="@ViewBag.Search" class="form-control" placeholder="کد یا نام شیفت" /></div><button class="btn btn-dark">جست‌وجو</button></form>@if(Model.Items.Count==0){
+<partial name="_EmptyState" model='new EmptyStateViewModel("شیفتی یافت نشد", "شیفت کاری جدید تعریف کنید", "bi-clock")' />
+}else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>شیفت</th><th>کد</th><th>شروع</th><th>پایان</th><th>ساعت کار</th><th>وضعیت</th><th></th></tr></thead><tbody>@foreach(var x in Model.Items){
+    <tr><td>@x.NameFa</td><td>@x.Code</td><td dir="ltr">@x.StartTime.ToString("HH:mm")</td><td dir="ltr">@x.EndTime.ToString("HH:mm")</td><td data-persian-number>@x.WorkHours</td><td><span class="status-badge @(x.IsActive ? "status-active" : "status-inactive")">@(x.IsActive ? "فعال" : "غیرفعال")</span></td><td class="table-actions"><a class="btn btn-sm btn-outline-dark" asp-action="EditShift" asp-route-id="@x.Id">ویرایش</a><form asp-action="ShiftStatus" asp-route-id="@x.Id" method="post"><input type="hidden" name="isActive" value="@(x.IsActive ? "false" : "true")" /><button class="btn btn-sm btn-link">تغییر وضعیت</button></form></td></tr>
+}
+</tbody></table></div>
+}
+</section>

@@ -1,0 +1,17 @@
+﻿@model PagedResult<WorkScheduleListItemDto>
+@{
+    ViewData[ViewDataKeys.Title] = "برنامه‌ های کاری"; ViewData[ViewDataKeys.PageTitle] = "برنامه‌ های کاری"; ViewData[ViewDataKeys.PageDescription] = "تعریف چرخه ‌های کاری و روزهای استراحت";
+}
+<partial name="_SchedulingTabs" />
+<div class="page-actions"><a class="btn btn-primary" asp-action="CreateSchedule">برنامه جدید</a></div>
+<section class="content-card">@if(Model.Items.Count==0){
+<partial name="_EmptyState" model='new EmptyStateViewModel("برنامه‌ ای یافت نشد", "برنامه کاری جدید تعریف کنید", "bi-calendar3")' />
+}else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>برنامه</th><th>کد</th><th>الگو</th><th>طول چرخه</th><th>تاریخ مبنا</th><th>وضعیت</th><th></th></tr></thead><tbody>@foreach(var x in Model.Items){
+    <tr><td>@x.NameFa</td><td>@x.Code</td><td>@x.PatternType</td><td><span data-persian-number>@x.CycleLengthDays</span> روز</td><td>@PersianDate.Format(x.AnchorDate)</td><td><span class="status-badge @(x.IsActive ? "status-active" : "status-inactive")">@(x.IsActive ? "فعال" : "غیرفعال")</span></td><td><a class="btn btn-sm btn-outline-dark" asp-action="ScheduleDetails" asp-route-id="@x.Id">جزئیات</a></td></tr>
+}
+</tbody></table></div>
+}
+</section>

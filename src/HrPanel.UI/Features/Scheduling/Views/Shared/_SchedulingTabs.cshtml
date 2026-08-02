@@ -1,0 +1,4 @@
+﻿@{
+    var a = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+<ul class="nav module-tabs"><li><a class="@(a.Contains("Shift") ? "active" : null)" asp-action="Shifts">شیفت‌ها</a></li><li><a class="@(a.Contains("Schedule") ? "active" : null)" asp-action="Schedules">برنامه‌های کاری</a></li></ul>
