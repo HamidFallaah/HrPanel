@@ -1,0 +1,182 @@
+﻿@using HrPanel.UI.Common.Constants
+@model PagedResult<EmployeeListItemDto>
+
+@{
+    ViewData[ViewDataKeys.Title] = "کارکنان";
+    ViewData[ViewDataKeys.PageTitle] = "کارکنان";
+    ViewData[ViewDataKeys.PageDescription] = "جست‌وجو و مدیریت پرونده کارکنان سازمان";
+
+    var search = ViewBag.Search as string;
+    bool? active = ViewBag.IsActive is bool activeValue? activeValue : null;
+}
+
+<div 
+    class="page-actions"><a class="btn btn-primary"asp-controller="Employees"asp-action="Create"><i class="bi bi-person-plus"></i> ثبت کارمند </a>
+</div>
+
+<section class="content-card">
+
+    <form asp-controller="Employees" asp-action="Index"method="get"class="filter-bar">
+
+        <div class="filter-search"><i class="bi bi-search"></i>
+
+            <input class="form-control"
+                   type="search"
+                   name="search"
+                   value="@search"
+                   placeholder="نام، شماره پرسنلی یا کد ملی"
+                   autocomplete="off" />
+        </div>
+
+        <select class="form-select" name="isActive"aria-label="فیلتر وضعیت کارمند"onchange="this.form.requestSubmit()">
+
+            @if (active is null)
+            {
+                <option value="" selected>همه وضعیت ‌ها</option>
+            }
+            else
+            {
+                <option value="">همه وضعیت‌ ها</option>
+            }
+
+            @if (active == true)
+            {
+                <option value="true" selected>فعال</option>
+            }
+            else
+            {
+                <option value="true">فعال</option>
+            }
+
+            @if (active == false)
+            {
+                <option value="false" selected>غیرفعال</option>
+            }
+            else
+            {
+                <option value="false">غیرفعال</option>
+            }
+
+        </select>
+
+        <button class="btn btn-dark" type="submit">
+            اعمال فیلتر
+        </button>
+
+        <a class="btn btn-outline-secondary"asp-controller="Employees"asp-action="Index">پاک‌کردن</a>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_EmptyState"
+                 model='new EmptyStateViewModel(
+                                      "کارمندی یافت نشد",
+                                      "فیلترها را تغییر دهید یا نخستین کارمند را ثبت کنید",
+                                      "bi-people",
+                                      "ثبت کارمند",
+                                      Url.Action("Create", "Employees"))' />
+        }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table">
+                <thead>
+                    <tr>
+                        <th>کارمند</th>
+                        <th>شماره پرسنلی</th>
+                        <th>کد ملی</th>
+                        <th>وضعیت</th>
+                        <th class="text-end">عملیات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var fullNameFa = $"{item.FirstNameFa} {item.LastNameFa}".Trim();
+
+                        var fullNameEn = $"{item.FirstName} {item.LastName}".Trim();
+
+                        var displayName = string.IsNullOrWhiteSpace(fullNameFa) ? "بدون نام": fullNameFa;
+
+                        var avatarText = string.IsNullOrWhiteSpace(fullNameFa)? "؟" : fullNameFa[..1];
+
+                        <tr>
+                            <td>
+                                <div class="person-cell">
+                                    <span class="list-avatar"> @avatarText </span>
+
+                                    <span> <strong>@displayName</strong>
+
+                                        @if (!string.IsNullOrWhiteSpace(fullNameEn))
+                                        {
+                                            <small>@fullNameEn</small>
+                                        }
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td dir="ltr">@item.EmployeeNumber
+                            </td>
+
+                            <td dir="ltr">@(item.NationalCode ?? "—")
+                            </td>
+
+                            <td> <span class="status-badge @(item.IsActive? "status-active": "status-inactive")"> @(item.IsActive ? "فعال" : "غیرفعال")
+                        </span>
+                    </td>
+
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-dark"
+                                   asp-controller="Employees"
+                                   asp-action="Details"
+                                   asp-route-id="@item.Id">
+                                    مشاهده پرونده
+                                </a>
+                            </td>
+                        </tr>
+                                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar">
+
+            <span>نمایش<b data-persian-number>@Model.Items.Count</b> از <b data-persian-number>@Model.TotalCount</b></span>
+
+            <nav aria-label="صفحه‌بندی کارکنان">
+                <ul class="pagination mb-0">
+
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-controller="Employees"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-isActive="@active"
+                           asp-route-page="@(Model.PageNumber - 1)"
+                           tabindex="@(!Model.HasPreviousPage ? "-1" : null)"
+                           aria-disabled="@(!Model.HasPreviousPage)">
+                            قبلی
+                        </a>
+                    </li>
+
+                    <li class="page-item active"aria-current="page"><span class="page-link"data-persian-number> @Model.PageNumber </span> </li>
+
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-controller="Employees"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-isActive="@active"
+                           asp-route-page="@(Model.PageNumber + 1)"
+                           tabindex="@(!Model.HasNextPage ? "-1" : null)"
+                           aria-disabled="@(!Model.HasNextPage)">
+                            بعدی
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    }
+</section>

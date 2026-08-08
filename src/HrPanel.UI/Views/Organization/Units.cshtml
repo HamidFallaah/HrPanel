@@ -1,0 +1,265 @@
+﻿@using HrPanel.UI.Common.Constants
+@model PagedResult<OrganizationUnitDto>
+
+@{
+    ViewData[ViewDataKeys.Title] = "ساختار سازمان";
+    ViewData[ViewDataKeys.PageTitle] = "ساختار سازمان";
+    ViewData[ViewDataKeys.PageDescription] =
+        "واحدها، سمت‌ها، محل‌های کار و گروه‌های عملیاتی";
+
+    var tree =
+        ViewBag.Tree as IReadOnlyCollection<OrganizationUnitTreeDto>
+        ?? Array.Empty<OrganizationUnitTreeDto>();
+
+    var search = ViewBag.Search as string;
+
+    bool? active = ViewBag.IsActive is bool activeValue
+        ? activeValue
+        : null;
+}
+
+<partial name="_OrganizationTabs" />
+
+<div class="page-actions">
+    <a class="btn btn-primary"
+       asp-controller="Organization"
+       asp-action="CreateUnitFromView">
+        <i class="bi bi-plus-lg"></i>
+        واحد جدید
+    </a>
+</div>
+
+<div class="organization-layout">
+
+    <aside class="content-card tree-panel">
+        <div class="card-heading">
+            <h2>درخت سازمانی</h2>
+        </div>
+
+        @if (tree.Count == 0)
+        {
+            <p class="muted">
+                ساختار سازمانی خالی است.
+            </p>
+        }
+        else
+        {
+            <ul class="org-tree">
+                @foreach (var root in tree)
+                {
+                    <li>
+                        <span>
+                            <i class="bi bi-building"></i>
+                            @root.NameFa
+                        </span>
+
+                        @if (root.Children.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var child in root.Children)
+                                {
+                                    <li>
+                                        <span>
+                                            <i class="bi bi-diagram-2"></i>
+                                            @child.NameFa
+                                        </span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </aside>
+
+    <section class="content-card">
+
+        <form asp-controller="Organization"
+              asp-action="Units"
+              method="get"
+              class="filter-bar">
+
+            <div class="filter-search">
+                <i class="bi bi-search"></i>
+
+                <input class="form-control"
+                       type="search"
+                       name="search"
+                       value="@search"
+                       placeholder="کد یا نام واحد"
+                       autocomplete="off" />
+            </div>
+
+            <select class="form-select"
+                    name="isActive"
+                    aria-label="فیلتر وضعیت واحد سازمانی"
+                    onchange="this.form.requestSubmit()">
+
+                @if (active is null)
+                {
+                    <option value="" selected>همه وضعیت‌ها</option>
+                }
+                else
+                {
+                    <option value="">همه وضعیت‌ها</option>
+                }
+
+                @if (active == true)
+                {
+                    <option value="true" selected>فعال</option>
+                }
+                else
+                {
+                    <option value="true">فعال</option>
+                }
+
+                @if (active == false)
+                {
+                    <option value="false" selected>غیرفعال</option>
+                }
+                else
+                {
+                    <option value="false">غیرفعال</option>
+                }
+            </select>
+
+            <button class="btn btn-dark" type="submit">
+                جست‌وجو
+            </button>
+
+            <a class="btn btn-outline-secondary"
+               asp-controller="Organization"
+               asp-action="Units">
+                پاک‌کردن
+            </a>
+        </form>
+
+        @if (Model.Items.Count == 0)
+        {
+            <partial name="_EmptyState"
+                     model='new EmptyStateViewModel(
+                                              "واحدی یافت نشد",
+                                              "فیلترها را تغییر دهید یا واحد سازمانی جدید ثبت کنید",
+                                              "bi-diagram-3")' />
+                }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table data-table">
+                    <thead>
+                        <tr>
+                            <th>واحد</th>
+                            <th>کد</th>
+                            <th>نوع</th>
+                            <th>والد</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.NameFa</strong>
+
+                                    @if (!string.IsNullOrWhiteSpace(item.NameEn))
+                                    {
+                                        <small class="d-block" dir="ltr">
+                                            @item.NameEn
+                                        </small>
+                                    }
+                                </td>
+
+                                <td dir="ltr">@item.Code</td>
+
+                                <td>@item.OrganizationUnitTypeName</td>
+
+                                <td>
+                                    @(item.ParentOrganizationUnitName ?? "ریشه")
+                                </td>
+
+                                <td>
+                                    <span class="status-badge @(item.IsActive
+                                                                                        ? "status-active"
+                                                                                        : "status-inactive")">
+                                @(item.IsActive ? "فعال" : "غیرفعال")
+                            </span>
+                        </td>
+
+                                <td class="table-actions">
+                                    <a class="btn btn-sm btn-outline-dark"
+                                       asp-controller="Organization"
+                                       asp-action="EditUnit"
+                                       asp-route-id="@item.Id">
+                                        ویرایش
+                                    </a>
+
+                                    <form asp-controller="Organization"
+                                          asp-action="UnitStatus"
+                                          asp-route-id="@item.Id"
+                                          method="post">
+
+                                        <input type="hidden"
+                                               name="isActive"
+                                               value="@(item.IsActive ? "false" : "true")" />
+
+                                        <button class="btn btn-sm btn-link"
+                                                type="submit">
+                                            @(item.IsActive ? "غیرفعال" : "فعال")
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-bar">
+                <span>
+                    نمایش
+                    <b data-persian-number>@Model.Items.Count</b>
+                    از
+                    <b data-persian-number>@Model.TotalCount</b>
+                </span>
+
+                <nav aria-label="صفحه‌بندی واحدهای سازمانی">
+                    <ul class="pagination mb-0">
+
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : null)">
+                            <a class="page-link"
+                               asp-controller="Organization"
+                               asp-action="Units"
+                               asp-route-search="@search"
+                               asp-route-isActive="@active"
+                               asp-route-page="@(Model.PageNumber - 1)">
+                                قبلی
+                            </a>
+                        </li>
+
+                        <li class="page-item active">
+                            <span class="page-link" data-persian-number>
+                                @Model.PageNumber
+                            </span>
+                        </li>
+
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : null)">
+                            <a class="page-link"
+                               asp-controller="Organization"
+                               asp-action="Units"
+                               asp-route-search="@search"
+                               asp-route-isActive="@active"
+                               asp-route-page="@(Model.PageNumber + 1)">
+                                بعدی
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
+            </div>
+        }
+    </section>
+</div>

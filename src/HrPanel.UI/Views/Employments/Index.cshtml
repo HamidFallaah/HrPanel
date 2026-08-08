@@ -1,0 +1,218 @@
+﻿@using HrPanel.UI.Common.Constants
+@using HrPanel.UI.Common.Formatting
+@model PagedResult<EmploymentListItemDto>
+
+@{
+    ViewData[ViewDataKeys.Title] = "استخدام‌ها";
+    ViewData[ViewDataKeys.PageTitle] = "استخدام‌ها";
+    ViewData[ViewDataKeys.PageDescription] =
+        "مدیریت چرخه استخدام، تخصیص سازمانی و برنامه کاری";
+
+    var search = ViewBag.Search as string;
+
+    bool? current = ViewBag.IsCurrent is bool currentValue
+        ? currentValue
+        : null;
+}
+
+<div class="page-actions">
+    <a class="btn btn-outline-dark"
+       asp-controller="Employments"
+       asp-action="ExternalPeople">
+        <i class="bi bi-person-lines-fill"></i>
+        اشخاص بیرونی
+    </a>
+
+    <a class="btn btn-primary"
+       asp-controller="Employments"
+       asp-action="Create">
+        <i class="bi bi-plus-lg"></i>
+        شروع استخدام
+    </a>
+</div>
+
+<section class="content-card">
+
+    <form asp-controller="Employments"
+          asp-action="Index"
+          method="get"
+          class="filter-bar">
+
+        <div class="filter-search">
+            <i class="bi bi-search"></i>
+
+            <input class="form-control"
+                   type="search"
+                   name="search"
+                   value="@search"
+                   placeholder="نام یا شماره پرسنلی"
+                   autocomplete="off" />
+        </div>
+
+        <select class="form-select"
+                name="isCurrent"
+                aria-label="فیلتر وضعیت سابقه استخدام"
+                onchange="this.form.requestSubmit()">
+
+            @if (current is null)
+            {
+                <option value="" selected>همه سوابق</option>
+            }
+            else
+            {
+                <option value="">همه سوابق</option>
+            }
+
+            @if (current == true)
+            {
+                <option value="true" selected>جاری</option>
+            }
+            else
+            {
+                <option value="true">جاری</option>
+            }
+
+            @if (current == false)
+            {
+                <option value="false" selected>پایان‌یافته</option>
+            }
+            else
+            {
+                <option value="false">پایان‌یافته</option>
+            }
+        </select>
+
+        <button class="btn btn-dark" type="submit">
+            اعمال فیلتر
+        </button>
+
+        <a class="btn btn-outline-secondary"
+           asp-controller="Employments"
+           asp-action="Index">
+            پاک‌کردن
+        </a>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_EmptyState"
+                 model='new EmptyStateViewModel(
+                                      "استخدامی یافت نشد",
+                                      "فیلترها را تغییر دهید یا استخدام جدیدی آغاز کنید",
+                                      "bi-person-vcard")' />
+        }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table data-table">
+                <thead>
+                    <tr>
+                        <th>کارمند</th>
+                        <th>نوع استخدام</th>
+                        <th>وضعیت</th>
+                        <th>ساعت کاری</th>
+                        <th>شروع</th>
+                        <th>پایان</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        var displayName =
+                        string.IsNullOrWhiteSpace(item.EmployeeDisplayName)
+                        ? item.EmployeeNumber
+                        : item.EmployeeDisplayName;
+
+                        var avatarText =
+                        string.IsNullOrWhiteSpace(displayName)
+                        ? "؟"
+                        : displayName[..1];
+
+                        <tr>
+                            <td>
+                                <div class="person-cell">
+                                    <span class="list-avatar">
+                                        @avatarText
+                                    </span>
+
+                                    <span>
+                                        <strong>@displayName</strong>
+                                        <small>@item.EmployeeNumber</small>
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td>@item.EmploymentTypeName</td>
+
+                            <td>
+                                <span class="status-badge @(item.IsCurrent
+                                                                                ? "status-active"
+                                                                                : "status-inactive")">
+                            @item.EmploymentStatusName
+                        </span>
+                    </td>
+
+                            <td>@(item.WorkTimeTypeName ?? "—")</td>
+
+                            <td>@PersianDate.Format(item.StartDate)</td>
+
+                            <td>@PersianDate.Format(item.EndDate)</td>
+
+                            <td>
+                                <a class="btn btn-sm btn-outline-dark"
+                                   asp-controller="Employments"
+                                   asp-action="Details"
+                                   asp-route-id="@item.Id">
+                                    جزئیات
+                                </a>
+                            </td>
+                        </tr>
+                                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar">
+            <span>
+                <b data-persian-number>@Model.TotalCount</b>
+                سابقه
+            </span>
+
+            <nav aria-label="صفحه‌بندی استخدام‌ها">
+                <ul class="pagination mb-0">
+
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-controller="Employments"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-isCurrent="@current"
+                           asp-route-page="@(Model.PageNumber - 1)">
+                            قبلی
+                        </a>
+                    </li>
+
+                    <li class="page-item active">
+                        <span class="page-link" data-persian-number>
+                            @Model.PageNumber
+                        </span>
+                    </li>
+
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-controller="Employments"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-isCurrent="@current"
+                           asp-route-page="@(Model.PageNumber + 1)">
+                            بعدی
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    }
+</section>

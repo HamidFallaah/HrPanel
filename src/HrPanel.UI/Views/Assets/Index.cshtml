@@ -1,0 +1,209 @@
+﻿@using HrPanel.Domain.Assets
+@using HrPanel.UI.Common.Constants
+@using HrPanel.UI.Common.Localization
+@model PagedResult<AssetListItemDto>
+
+@{
+    ViewData[ViewDataKeys.Title] = "دارایی‌ ها";
+    ViewData[ViewDataKeys.PageTitle] = "دارایی ‌ها";
+    ViewData[ViewDataKeys.PageDescription] = "ثبت، واگذاری، بازگشت و پیگیری وضعیت تجهیزات";
+
+    var lookups = (AssetLookupsDto)ViewBag.Lookups;
+    var search = ViewBag.Search as string;
+
+    short? selectedAssetTypeId = ViewBag.AssetTypeId is short assetTypeValue? assetTypeValue: null;
+
+    AssetStatus? selectedStatus = ViewBag.Status is AssetStatus statusValue? statusValue: null;
+
+    long? selectedEmployeeId = ViewBag.EmployeeId is long employeeIdValue? employeeIdValue: null;
+}
+
+<div class="page-actions">
+    <a class="btn btn-primary"asp-controller="Assets"asp-action="Create"><i class="bi bi-plus-lg"></i> ثبت دارایی</a>
+</div>
+
+<section class="content-card">
+
+    <form asp-controller="Assets"asp-action="Index"method="get" class="filter-bar">
+
+        @if (selectedEmployeeId.HasValue)
+        {
+            <input type="hidden"name="employeeId" value="@selectedEmployeeId.Value" />
+        }
+
+        <div class="filter-search"><i class="bi bi-search"></i>
+
+            <input class="form-control"
+                   type="search"
+                   name="search"
+                   value="@search"
+                   placeholder="برچسب، سریال، IMEI یا شماره خدمت"
+                   autocomplete="off" />
+        </div>
+
+        <select class="form-select"name="assetTypeId"aria-label="فیلتر نوع دارایی" onchange="this.form.requestSubmit()">
+
+            @if (!selectedAssetTypeId.HasValue)
+            {
+                <option value="" selected>همه انواع</option>
+            }
+            else
+            {
+                <option value="">همه انواع</option>
+            }
+
+            @foreach (var item in lookups.AssetTypes)
+            {
+                if (selectedAssetTypeId.HasValue &&
+                item.Id == selectedAssetTypeId.Value)
+                {
+                    <option value="@item.Id" selected>
+                        @item.DisplayName
+                    </option>
+                }
+                else
+                {
+                    <option value="@item.Id">
+                        @item.DisplayName
+                    </option>
+                }
+            }
+        </select>
+
+        <select class="form-select" name="status"aria-label="فیلتر وضعیت دارایی" onchange="this.form.requestSubmit()">
+
+            @if (!selectedStatus.HasValue)
+            {
+                <option value="" selected>همه وضعیت‌ها</option>
+            }
+            else
+            {
+                <option value="">همه وضعیت‌ها</option>
+            }
+
+            @foreach (var item in lookups.AssetStatuses)
+            {
+                if (selectedStatus.HasValue &&
+                item.Id == (short)selectedStatus.Value)
+                {
+                    <option value="@item.Id" selected>
+                        @item.DisplayName
+                    </option>
+                }
+                else
+                {
+                    <option value="@item.Id">
+                        @item.DisplayName
+                    </option>
+                }
+            }
+        </select>
+
+        <button class="btn btn-dark" type="submit">اعمال فیلتر</button>
+
+        <a class="btn btn-outline-secondary"asp-controller="Assets"asp-action="Index">پاک ‌کردن</a>
+    </form>
+
+    @if (Model.Items.Count == 0)
+    {
+        <partial name="_EmptyState"
+                 model='new EmptyStateViewModel(
+                                      "دارایی‌ای یافت نشد",
+                                      "فیلترها را تغییر دهید یا دارایی جدید ثبت کنید",
+                                      "bi-phone")' />
+        }
+    else
+    {
+        <div class="asset-grid">
+            @foreach (var item in Model.Items)
+            {
+                <article class="asset-card">
+                    <div class="asset-card-top">
+                        <span class="metric-icon bg-yellow">
+                            <i class="bi bi-phone"></i>
+                        </span>
+
+                        <span class="status-badge status-@item.Status.ToString().ToLowerInvariant()">
+                            @DisplayNames.AssetStatuses(item.Status)
+                        </span>
+                    </div>
+
+                    <h2>@item.AssetTypeName</h2>
+
+                    <dl>
+                        <div>
+                            <dt>برچسب</dt>
+                            <dd>@(item.AssetTag ?? "—")</dd>
+                        </div>
+
+                        <div>
+                            <dt>سریال / IMEI</dt>
+                            <dd dir="ltr">
+                                @(item.SerialNumber ?? item.Imei ?? "—")
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt>دارنده</dt>
+                            <dd>@(item.AssignedEmployeeName ?? "—")</dd>
+                        </div>
+                    </dl>
+
+                    <a class="btn btn-outline-dark w-100"
+                       asp-controller="Assets"
+                       asp-action="Details"
+                       asp-route-id="@item.Id">
+                        مشاهده جزئیات
+                    </a>
+                </article>
+            }
+        </div>
+
+        <div class="pagination-bar">
+            <span>
+                نمایش
+                <b data-persian-number>@Model.Items.Count</b>
+                از
+                <b data-persian-number>@Model.TotalCount</b>
+            </span>
+
+            <nav aria-label="صفحه‌بندی دارایی‌ها">
+                <ul class="pagination mb-0">
+
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-controller="Assets"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-assetTypeId="@selectedAssetTypeId"
+                           asp-route-status="@selectedStatus"
+                           asp-route-employeeId="@selectedEmployeeId"
+                           asp-route-page="@(Model.PageNumber - 1)">
+                            قبلی
+                        </a>
+                    </li>
+
+                    <li class="page-item active">
+                        <span class="page-link" data-persian-number>
+                            @Model.PageNumber
+                        </span>
+                    </li>
+
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : null)">
+                        <a class="page-link"
+                           asp-controller="Assets"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-assetTypeId="@selectedAssetTypeId"
+                           asp-route-status="@selectedStatus"
+                           asp-route-employeeId="@selectedEmployeeId"
+                           asp-route-page="@(Model.PageNumber + 1)">
+                            بعدی
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    }
+</section>
