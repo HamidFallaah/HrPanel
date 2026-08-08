@@ -1,7 +1,6 @@
 using HrPanel.Application.Common.Abstractions.Services;
 using HrPanel.Application.Common.Authorization;
 using HrPanel.UI.Authorization;
-using HrPanel.UI.Ui;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -90,13 +89,9 @@ public static class DependencyInjection
         });
 
         services
-       .AddControllersWithViews()
-       .AddRazorOptions(options =>
-       {
-           options.ViewLocationExpanders.Add(new FeatureViewLocationExpander());
-       })
-       .AddViewLocalization()
-       .AddDataAnnotationsLocalization();
+            .AddControllersWithViews()
+            .AddViewLocalization()
+            .AddDataAnnotationsLocalization();
 
         //services.AddEndpointsApiExplorer();
         //services.AddSwaggerGen();

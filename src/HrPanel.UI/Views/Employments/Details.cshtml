@@ -1,0 +1,169 @@
+﻿@using HrPanel.UI.Common.Constants
+@using HrPanel.UI.Common.Formatting
+@model HrPanel.UI.Models.Employments.EmploymentDetailsViewModel
+@{
+    var e = Model.Employment; var tab = Context.Request.Query["tab"].ToString(); if (string.IsNullOrWhiteSpace(tab)) tab = "overview"; ViewData[ViewDataKeys.Title] = $"استخدام {e.EmployeeDisplayName}"; ViewData[ViewDataKeys.PageTitle] = "جزئیات استخدام";
+}
+<section class="profile-hero content-card"><div class="profile-identity"><span class="profile-avatar">@e.EmployeeDisplayName.First()</span><div><div class="d-flex gap-2 align-items-center flex-wrap"><h1>@e.EmployeeDisplayName</h1><span class="status-badge @(e.IsCurrent ? "status-active" : "status-inactive")">@(e.IsCurrent ? "استخدام جاری" : "پایان‌یافته")</span></div><p>@e.EmployeeNumber · @e.EmploymentTypeName · شروع @PersianDate.Format(e.StartDate)</p></div></div><div class="profile-actions"><a class="btn btn-outline-dark" asp-controller="Employees" asp-action="Details" asp-route-id="@e.EmployeeId">پرونده کارمند</a>@if(e.IsCurrent){
+<button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#end-employment">پایان استخدام</button>
+}
+</div></section>
+<ul class="nav profile-tabs">@foreach(var item in new[]{("overview","bi-card-checklist","نمای کلی"),("assignments","bi-diagram-3","تخصیص سازمانی"),("groups","bi-people","گروه‌های عملیاتی"),("schedules","bi-calendar3","برنامه کاری"),("relationships","bi-share","روابط"),("disciplinary","bi-exclamation-triangle","انضباطی")}){
+<li><a class="@(tab == item.Item1 ? "active" : null)" asp-route-id="@e.Id" asp-route-tab="@item.Item1"><i class="bi @item.Item2"></i>@item.Item3</a></li>
+}
+</ul>
+@if (tab == "overview")
+{
+    <div class="detail-grid">
+        <section class="content-card"><div class="card-heading"><h2>اطلاعات استخدام</h2></div><dl class="detail-list"><div><dt>نوع استخدام</dt><dd>@e.EmploymentTypeName</dd></div><div><dt>وضعیت</dt><dd>@e.EmploymentStatusName</dd></div><div><dt>نوع ساعت کاری</dt><dd>@(e.WorkTimeTypeName ?? "—")</dd></div><div><dt>مدت قرارداد</dt><dd>@(e.ContractTermMonths.HasValue ? $"{e.ContractTermMonths} ماه" : "—")</dd></div><div><dt>تاریخ پایان</dt><dd>@PersianDate.Format(e.EndDate)</dd></div><div><dt>دلیل خاتمه</dt><dd>@(e.TerminationReason ?? "—")</dd></div></dl></section>
+        @if (e.IsCurrent)
+        {
+            <section class="content-card"><div class="card-heading"><h2>تغییرات جاری</h2></div><form asp-action="ChangeStatusFromView" asp-route-id="@e.Id" method="post" class="stack-form"><label class="form-label">وضعیت استخدام</label><div class="input-group"><select name="employmentStatusId" class="form-select">@foreach(var x in Model.EmploymentLookups.EmploymentStatuses){
+            <option value="@x.Id" selected="@(x.Id == e.EmploymentStatusId)">@x.DisplayName</option>
+        }
+    </select><button class="btn btn-dark">ذخیره</button></div></form><form asp-action="ChangeWorkTime" asp-route-id="@e.Id" method="post" class="stack-form mt-4"><label class="form-label">نوع ساعت کاری</label><div class="input-group"><select name="workTimeTypeId" class="form-select"><option value="">بدون انتخاب</option>@foreach(var x in Model.EmploymentLookups.WorkTimeTypes){
+        <option value="@x.Id" selected="@(x.Id == e.WorkTimeTypeId)">@x.DisplayName</option>
+    }
+</select><button class="btn btn-dark">ذخیره</button></div></form></section>
+        }
+</div>
+}else if (tab == "assignments")
+{
+    <section class="content-card"><div class="card-heading"><div><h2>تخصیص‌های سازمانی</h2><p>واحد، سمت، سطح شغلی و محل کار در هر حوزه</p></div>@if(e.IsCurrent){
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#assignment-modal">افزودن تخصیص</button>
+}
+</div>@if(e.Assignments.Count==0){
+<partial name="_EmptyState" model='new EmptyStateViewModel("تخصیصی ثبت نشده", "تخصیص منابع انسانی یا عملیاتی را ثبت کنید.", "bi-diagram-3")' />
+}else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>حوزه</th><th>واحد</th><th>سمت</th><th>سطح</th><th>محل کار</th><th>بازه</th><th></th></tr></thead><tbody>@foreach(var x in e.Assignments){
+    <tr><td>@x.Context</td><td>@(x.OrganizationUnitName ?? "—")</td><td>@(x.PositionTitle ?? "—")</td><td>@(x.JobLevelTitle ?? "—")</td><td>@(x.WorkLocationName ?? "—")</td><td>@PersianDate.Format(x.EffectiveFrom) تا @PersianDate.Format(x.EffectiveTo)</td><td>@if(x.IsCurrent){
+    <form asp-action="EndAssignmentFromView" asp-route-id="@e.Id" asp-route-assignmentId="@x.Id" method="post" class="inline-form"><input name="effectiveTo" class="form-control form-control-sm" data-jdp required placeholder="تاریخ پایان" /><button class="btn btn-sm btn-outline-danger">پایان</button></form>
+}
+</td></tr>
+}
+</tbody></table></div>
+}
+</section>
+<div class="modal fade" id="assignment-modal"><div class="modal-dialog modal-lg"><div class="modal-content"><form asp-action="AddAssignmentFromView" asp-route-id="@e.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">تخصیص سازمانی</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body row g-3"><div class="col-md-6"><label class="form-label">حوزه</label><select name="context" class="form-select">@foreach(var x in Model.EmploymentLookups.AssignmentContexts){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-6"><label class="form-label">تاریخ شروع</label><input name="effectiveFrom" class="form-control" data-jdp required /></div><div class="col-md-6"><label class="form-label">واحد سازمانی</label><select name="organizationUnitId" class="form-select"><option value="">بدون انتخاب</option>@foreach(var x in Model.OrganizationLookups.OrganizationUnits){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-6"><label class="form-label">سمت</label><select name="positionId" class="form-select"><option value="">بدون انتخاب</option>@foreach(var x in Model.OrganizationLookups.Positions){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-6"><label class="form-label">سطح شغلی</label><select name="jobLevelId" class="form-select"><option value="">بدون انتخاب</option>@foreach(var x in Model.OrganizationLookups.JobLevels){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-6"><label class="form-label">محل کار</label><select name="workLocationId" class="form-select"><option value="">بدون انتخاب</option>@foreach(var x in Model.OrganizationLookups.WorkLocations){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">انصراف</button><button class="btn btn-primary">ثبت</button></div></form></div></div></div>
+}else if (tab == "groups")
+{
+    <section class="content-card"><div class="card-heading"><h2>گروه‌های عملیاتی</h2>@if(e.IsCurrent){
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#group-modal">تخصیص گروه</button>
+}
+</div>@if(e.OperationalGroups.Count==0){
+<partial name="_EmptyState" model='new EmptyStateViewModel("گروهی تخصیص نیافته", "گروه عملیاتی کارمند را تعیین کنید.", "bi-people")' />
+}else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>گروه</th><th>بازه</th><th>وضعیت</th><th></th></tr></thead><tbody>@foreach(var x in e.OperationalGroups){
+    <tr><td>@x.OperationalGroupName <small>@x.OperationalGroupCode</small></td><td>@PersianDate.Format(x.EffectiveFrom) تا @PersianDate.Format(x.EffectiveTo)</td><td>@if(x.IsPrimary){
+    <span class="status-badge status-active">اصلی</span>
+}
+</td><td class="table-actions">@if(x.IsCurrent&&!x.IsPrimary){
+<form asp-action="PrimaryGroup" asp-route-id="@e.Id" asp-route-assignmentId="@x.Id" method="post"><button class="btn btn-sm btn-link">انتخاب اصلی</button></form>
+}
+@if (x.IsCurrent)
+{
+    <form asp-action="EndGroup" asp-route-id="@e.Id" asp-route-assignmentId="@x.Id" method="post" class="inline-form"><input name="effectiveTo" class="form-control form-control-sm" data-jdp required placeholder="تاریخ پایان" /><button class="btn btn-sm btn-outline-danger">پایان</button></form>
+}
+</td></tr>
+}
+</tbody></table></div>
+}
+</section>
+<div class="modal fade" id="group-modal"><div class="modal-dialog"><div class="modal-content"><form asp-action="AddGroup" asp-route-id="@e.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">تخصیص گروه عملیاتی</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">گروه</label><select name="operationalGroupId" class="form-select mb-3">@foreach(var x in Model.OrganizationLookups.OperationalGroups){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select><label class="form-label">تاریخ شروع</label><input name="effectiveFrom" class="form-control mb-3" data-jdp required /><div class="form-check"><input name="isPrimary" value="true" class="form-check-input" type="checkbox" id="primary-group" checked /><label for="primary-group">گروه اصلی</label></div></div><div class="modal-footer"><button class="btn btn-primary">ثبت</button></div></form></div></div></div>
+}else if (tab == "schedules")
+{
+    <section class="content-card"><div class="card-heading"><h2>برنامه‌های کاری</h2>@if(e.IsCurrent){
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#schedule-modal">تخصیص برنامه</button>
+}
+</div>@if(Model.ScheduleAssignments.Count==0){
+<partial name="_EmptyState" model='new EmptyStateViewModel("برنامه‌ای تخصیص نیافته", "یک برنامه کاری فعال را انتخاب کنید.", "bi-calendar3")' />
+}else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>برنامه</th><th>شروع</th><th>پایان</th><th>آفست چرخش</th><th></th></tr></thead><tbody>@foreach(var x in Model.ScheduleAssignments){
+    <tr><td>@x.WorkScheduleName</td><td>@PersianDate.Format(x.EffectiveFrom)</td><td>@PersianDate.Format(x.EffectiveTo)</td><td data-persian-number>@x.RotationOffsetDays</td><td>@if(x.IsCurrent){
+    <form asp-action="EndSchedule" asp-route-id="@e.Id" asp-route-assignmentId="@x.Id" method="post" class="inline-form"><input name="effectiveTo" class="form-control form-control-sm" data-jdp required /><button class="btn btn-sm btn-outline-danger">پایان</button></form>
+}
+</td></tr>
+}
+</tbody></table></div>
+}
+</section>
+<div class="modal fade" id="schedule-modal"><div class="modal-dialog"><div class="modal-content"><form asp-action="AssignSchedule" asp-route-id="@e.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">تخصیص برنامه کاری</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">برنامه</label><select name="workScheduleId" class="form-select mb-3">@foreach(var x in Model.SchedulingLookups.WorkSchedules){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select><label class="form-label">تاریخ شروع</label><input name="effectiveFrom" class="form-control mb-3" data-jdp required /><label class="form-label">آفست روز چرخش</label><input name="rotationOffsetDays" type="number" value="0" class="form-control" /></div><div class="modal-footer"><button class="btn btn-primary">ثبت</button></div></form></div></div></div>
+}else if (tab == "relationships")
+{
+    <section class="content-card"><div class="card-heading"><h2>روابط سازمانی</h2><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#relationship-modal">افزودن رابطه</button></div>@if(e.Relationships.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("رابطه‌ای ثبت نشده", "رابطه با کارمند یا شخص بیرونی را اضافه کنید.", "bi-share")' />
+}
+else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>نوع</th><th>حوزه</th><th>شخص مرتبط</th><th>بازه</th><th></th></tr></thead><tbody>@foreach(var x in e.Relationships){
+    <tr><td>@x.Type</td><td>@x.Context</td><td>@x.RelatedPersonDisplayName</td><td>@PersianDate.Format(x.EffectiveFrom) تا @PersianDate.Format(x.EffectiveTo)</td><td>@if(x.IsCurrent){
+    <form asp-action="EndRelationshipFromView" asp-route-id="@e.Id" asp-route-employeeId="@e.EmployeeId" asp-route-relationshipId="@x.Id" method="post" class="inline-form"><input name="effectiveTo" class="form-control form-control-sm" data-jdp required /><button class="btn btn-sm btn-outline-danger">پایان</button></form>
+}
+</td></tr>
+}
+</tbody></table></div>
+}
+</section>
+<div class="modal fade" id="relationship-modal"><div class="modal-dialog modal-lg"><div class="modal-content"><form asp-action="AddRelationshipFromView" asp-route-id="@e.Id" method="post"><input type="hidden" name="employeeId" value="@e.EmployeeId" /><div class="modal-header"><h2 class="modal-title fs-5">افزودن رابطه</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body row g-3"><div class="col-md-4"><label class="form-label">نوع</label><select name="type" class="form-select">@foreach(var x in Model.EmploymentLookups.RelationshipTypes){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-4"><label class="form-label">حوزه</label><select name="context" class="form-select">@foreach(var x in Model.EmploymentLookups.RelationshipContexts){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div><div class="col-md-4"><label class="form-label">تاریخ شروع</label><input name="effectiveFrom" class="form-control" data-jdp required /></div><div class="col-md-6"><label class="form-label">کارمند مرتبط</label><select name="relatedEmployeeId" class="form-select"><option value="">انتخاب نشود</option>@foreach(var x in Model.EmployeeOptions.Where(x=>x.Id!=e.EmployeeId)){
+<option value="@x.Id">@($"{x.FirstNameFa} {x.LastNameFa}") — @x.EmployeeNumber</option>
+}
+</select></div><div class="col-md-6"><label class="form-label">یا شخص بیرونی</label><select name="relatedExternalPersonId" class="form-select"><option value="">انتخاب نشود</option>@foreach(var x in Model.ExternalPeople){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select></div></div><div class="modal-footer"><button class="btn btn-primary">ثبت</button></div></form></div></div></div>
+}else
+{
+    <section class="content-card"><div class="card-heading"><h2>اقدامات انضباطی</h2><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#disciplinary-modal">ثبت اقدام</button></div>@if(e.DisciplinaryActions.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("اقدامی ثبت نشده", "هیچ اقدام انضباطی در این پرونده وجود ندارد.", "bi-shield-check")' />
+}else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>شرح</th><th>شروع</th><th>پایان</th><th>وضعیت</th><th></th></tr></thead><tbody>@foreach(var x in e.DisciplinaryActions){
+    <tr><td>@x.Details</td><td>@PersianDate.Format(x.StartDate)</td><td>@PersianDate.Format(x.EndDate)</td><td>@(x.IsClosed ? "بسته" : "باز")</td><td>@if(!x.IsClosed){
+    <form asp-action="CloseDisciplinary" asp-route-id="@e.Id" asp-route-employeeId="@e.EmployeeId" asp-route-actionId="@x.Id" method="post" class="inline-form"><input name="endDate" class="form-control form-control-sm" data-jdp required /><button class="btn btn-sm btn-outline-danger">بستن</button></form>
+}
+</td></tr>
+}
+</tbody></table></div>
+}
+</section>
+<div class="modal fade" id="disciplinary-modal"><div class="modal-dialog"><div class="modal-content"><form asp-action="AddDisciplinary" asp-route-id="@e.Id" method="post"><input type="hidden" name="employeeId" value="@e.EmployeeId" /><div class="modal-header"><h2 class="modal-title fs-5">ثبت اقدام انضباطی</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">شرح</label><textarea name="details" class="form-control mb-3" rows="4" required></textarea><label class="form-label">تاریخ شروع</label><input name="startDate" class="form-control mb-3" data-jdp required /><label class="form-label">تاریخ پایان (اختیاری)</label><input name="endDate" class="form-control" data-jdp /></div><div class="modal-footer"><button class="btn btn-primary">ثبت</button></div></form></div></div></div>
+}
+<div class="modal fade" id="end-employment"><div class="modal-dialog"><div class="modal-content"><form asp-action="End" asp-route-id="@e.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">پایان استخدام</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">تاریخ پایان</label><input name="endDate" class="form-control mb-3" data-jdp required /><label class="form-label">وضعیت پایان</label><select name="employmentStatusId" class="form-select mb-3">@foreach(var x in Model.EmploymentLookups.EmploymentStatuses){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select><label class="form-label">دلیل</label><textarea name="reason" class="form-control" rows="3"></textarea></div><div class="modal-footer"><button class="btn btn-danger">پایان استخدام</button></div></form></div></div></div>

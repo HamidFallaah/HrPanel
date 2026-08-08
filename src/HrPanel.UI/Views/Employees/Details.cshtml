@@ -1,0 +1,343 @@
+﻿@using HrPanel.UI.Common.Constants
+@using HrPanel.UI.Common.Formatting
+@using HrPanel.UI.Common.Localization
+@model HrPanel.UI.Models.Employees.EmployeeProfileViewModel
+@{
+    var e = Model.Employee;
+    var p = e.PersonalDetails;
+    var lookups = (EmployeeLookupsDto)ViewBag.Lookups;
+    var tab = Context.Request.Query["tab"].ToString();
+    if (string.IsNullOrWhiteSpace(tab))
+    {
+        tab = "overview";
+    }
+
+    var name = p is null ? "بدون نام" : $"{p.FirstNameFa} {p.LastNameFa}";
+    ViewData[ViewDataKeys.Title] = name;
+    ViewData[ViewDataKeys.PageTitle] = "پرونده کارمند";
+}
+<section class="profile-hero content-card">
+    <div class="profile-identity">
+        <span class="profile-avatar">@(name.First())</span>
+        <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h1>@name</h1>
+                <span class="status-badge @(e.IsActive ? "status-active" : "status-inactive")">@(e.IsActive ? "فعال" : "غیرفعال")</span>
+            </div>
+            <div class="profile-summary">
+                شماره پرسنلی <b dir="ltr">@e.EmployeeNumber</b>
+                @if (!string.IsNullOrWhiteSpace(p?.NationalCode))
+                {
+                    <span> · کد ملی <b dir="ltr">@p.NationalCode</b></span>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="profile-actions">
+        <a class="btn btn-outline-dark" asp-action="Edit" asp-route-id="@e.Id"><i class="bi bi-pencil"></i> ویرایش</a>
+        <form asp-action="ChangeStatus" asp-route-id="@e.Id" method="post" data-confirm="@(e.IsActive ? "غیرفعال‌کردن کارمند" : "فعال‌کردن کارمند")">
+            <input type="hidden" name="isActive" value="@(e.IsActive ? "false" : "true")" />
+            <button class="btn @(e.IsActive ? "btn-outline-danger" : "btn-outline-success")" type="submit">@(e.IsActive ? "غیرفعال‌کردن" : "فعال‌کردن")</button>
+        </form>
+    </div>
+</section>
+<ul class="nav profile-tabs" role="tablist">
+    @foreach (var item in new[] { ("overview", "bi-person", "نمای کلی"), ("contacts", "bi-telephone", "راه‌های ارتباطی"), ("identifiers", "bi-fingerprint", "شناسه‌ها"), ("education", "bi-mortarboard", "تحصیلات"), ("dependents", "bi-people", "افراد تحت تکفل"), ("employment", "bi-person-vcard", "استخدام و سازمان"), ("assets", "bi-phone", "دارایی و برنامه کاری") })
+    {
+        <li><a class="@(tab == item.Item1 ? "active" : null)" asp-route-id="@e.Id" asp-route-tab="@item.Item1"><i class="bi @item.Item2"></i>@item.Item3</a></li>
+    }
+</ul>
+@if (tab == "overview")
+{
+    <div class="detail-grid">
+        <section class="content-card"><div class="card-heading"><h2>اطلاعات فردی</h2><a asp-action="Edit" asp-route-id="@e.Id">ویرایش</a></div><dl class="detail-list"><div><dt>نام انگلیسی</dt><dd dir="ltr">@($"{p?.FirstName} {p?.LastName}".Trim())</dd></div><div><dt>نام پدر</dt><dd>@(p?.FatherName ?? "—")</dd></div><div><dt>تاریخ تولد</dt><dd>@PersianDate.Format(p?.BirthDate)</dd></div><div><dt>محل تولد</dt><dd>@(p?.BirthPlace ?? "—")</dd></div><div><dt>جنسیت</dt><dd>@(p?.GenderDisplayName ?? "—")</dd></div><div><dt>وضعیت تأهل</dt><dd>@(p?.MaritalStatusDisplayName ?? "—")</dd></div></dl></section>
+        <section class="content-card"><div class="card-heading"><h2>خلاصه پرونده</h2></div><div class="summary-list"><div><span>استخدام‌ها</span><strong data-persian-number>@Model.Employments.Count</strong></div><div><span>راه‌های ارتباطی</span><strong data-persian-number>@e.Contacts.Count</strong></div><div><span>دارایی‌های جاری</span><strong data-persian-number>@Model.Assets.Count</strong></div><div><span>آخرین تغییر</span><strong>@PersianDate.Format(e.ModifiedAt ?? e.CreatedAt)</strong></div></div></section>
+    </div>
+}
+else if (tab == "contacts")
+{
+    <section class="content-card">
+        <div class="card-heading"><div><h2>راه‌های ارتباطی</h2><p>شماره تلفن، ایمیل و نشانی‌های ثبت‌شده</p></div><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#contact-modal"><i class="bi bi-plus"></i> افزودن</button></div>
+        @if (e.Contacts.Count == 0)
+        {
+            <partial name="_EmptyState" model='new EmptyStateViewModel("راه ارتباطی ثبت نشده", "از دکمه افزودن برای تکمیل پرونده استفاده کنید.", "bi-telephone")' />
+        }
+        else
+        {
+
+            <div class="table-responsive"><table class="table data-table"><thead><tr><th>نوع</th><th>مقدار</th><th>وضعیت</th><th></th></tr></thead><tbody>@foreach (var item in e.Contacts) {
+            <tr><td>@item.TypeDisplayName</td><td dir="ltr">@item.Value</td><td>@if (item.IsPrimary) {
+            <span class="status-badge status-active">اصلی</span>
+        }
+    </td><td class="table-actions"><button class="btn btn-sm btn-link" type="button" data-bs-toggle="modal" data-bs-target="#contact-edit-@item.Id">ویرایش</button>@if (!item.IsPrimary) {
+        <form asp-action="PrimaryContact" asp-route-id="@e.Id" asp-route-contactId="@item.Id" method="post"><button class="btn btn-sm btn-link" type="submit">انتخاب به‌عنوان اصلی</button></form>
+    }
+<form asp-action="RemoveContactFromView" asp-route-id="@e.Id" asp-route-contactId="@item.Id" method="post" data-confirm="حذف راه ارتباطی"><button class="btn btn-sm btn-link text-danger" type="submit">حذف</button></form></td></tr>
+        }
+</tbody></table></div>@foreach(var item in e.Contacts){
+    <div class="modal fade" id="contact-edit-@item.Id"><div class="modal-dialog"><div class="modal-content"><form asp-action="EditContact" asp-route-id="@e.Id" asp-route-contactId="@item.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">ویرایش @item.TypeDisplayName</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">مقدار</label><input name="value" value="@item.Value" class="form-control" dir="ltr" required /></div><div class="modal-footer"><button class="btn btn-primary">ذخیره</button></div></form></div></div></div>
+        }
+  }
+</section>
+<div class="modal fade" id="contact-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form asp-action="AddContactFromView" asp-route-id="@e.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">افزودن راه ارتباطی</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><label class="form-label">نوع</label><select name="Type" class="form-select" required>@foreach (var item in lookups.ContactTypes) {
+<option value="@item.Id">@item.DisplayName</option>
+}
+</select></div><div class="mb-3"><label class="form-label">مقدار</label><input name="Value" class="form-control" dir="ltr" required /></div><div class="form-check"><input name="IsPrimary" value="true" type="checkbox" class="form-check-input" id="contact-primary" /><label for="contact-primary" class="form-check-label">راه ارتباطی اصلی</label></div></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">انصراف</button><button class="btn btn-primary" type="submit">ثبت</button></div></form></div></div></div>
+} else if (tab == "identifiers")
+{
+    <section class="content-card"><div class="card-heading"><div><h2>شناسه‌ها</h2><p>شناسه‌های سازمانی و قانونی کارمند</p></div><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#identifier-modal">افزودن</button></div>@if(e.Identifiers.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("شناسه‌ای ثبت نشده", "شناسه‌های تکمیلی را از این بخش اضافه کنید.", "bi-fingerprint")' />
+}
+else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>نوع</th><th>مقدار</th><th>از تاریخ</th><th>تا تاریخ</th><th></th></tr></thead><tbody>@foreach(var item in e.Identifiers){
+    <tr><td>@item.TypeDisplayName</td><td dir="ltr">@item.Value</td><td>@PersianDate.Format(item.EffectiveFrom)</td><td>@PersianDate.Format(item.EffectiveTo)</td><td>@if(item.IsActive){
+    <form asp-action="EndIdentifierFromView" asp-route-id="@e.Id" asp-route-identifierId="@item.Id" method="post" class="inline-form"><input name="effectiveTo" class="form-control form-control-sm" data-jdp placeholder="تاریخ پایان" required /><button class="btn btn-sm btn-outline-danger">پایان</button></form>
+}
+</td></tr>
+}
+</tbody></table></div>
+}
+</section>
+<div class="modal fade" id="identifier-modal"><div class="modal-dialog"><div class="modal-content"><form asp-action="AddIdentifierFromView" asp-route-id="@e.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">افزودن شناسه</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">نوع</label><select name="type" class="form-select mb-3">@foreach(var item in lookups.IdentifierTypes){
+<option value="@item.Id">@item.DisplayName</option>
+}
+</select><label class="form-label">مقدار</label><input name="value" class="form-control mb-3" required dir="ltr" /><label class="form-label">تاریخ شروع</label><input name="effectiveFrom" class="form-control" data-jdp autocomplete="off" /></div><div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">انصراف</button><button class="btn btn-primary">ثبت</button></div></form></div></div></div>
+}
+else if (tab == "education")
+{
+    <section class="content-card">
+        <div class="card-heading">
+            <div><h2>سوابق تحصیلی</h2></div>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#education-modal">افزودن</button>
+        </div>
+
+        @if (e.EducationRecords.Count == 0)
+        {
+            <partial name="_EmptyState" model='@(new EmptyStateViewModel("سابقه تحصیلی ثبت نشده", "مدارک تحصیلی کارمند را اضافه کنید.", "bi-mortarboard"))' />
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table data-table">
+                    <thead><tr><th>مدرک</th><th>رشته</th><th>مرکز آموزشی</th><th>تاریخ فراغت</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var item in e.EducationRecords)
+                        {
+                            <tr>
+                                <td>
+                                    @(item.DegreeTitle ?? "—")
+                                    @if (item.IsHighestDegree)
+                                    {
+                                        <span class="status-badge status-active">بالاترین</span>
+                                    }
+                                </td>
+                                <td>@(item.FieldOfStudy ?? "—")</td>
+                                <td>@(item.InstitutionName ?? "—")</td>
+                                <td>@PersianDate.Format(item.GraduationDate)</td>
+                                <td class="table-actions">
+                                    <button class="btn btn-sm btn-link" type="button" data-bs-toggle="modal" data-bs-target="#education-edit-@item.Id">ویرایش</button>
+                                    @if (!item.IsHighestDegree)
+                                    {
+                                        <form asp-action="HighestEducation" asp-route-id="@e.Id" asp-route-educationId="@item.Id" method="post">
+                                            <button class="btn btn-sm btn-link" type="submit">انتخاب بالاترین</button>
+                                        </form>
+                                    }
+                                    <form asp-action="RemoveEducationFromView" asp-route-id="@e.Id" asp-route-educationId="@item.Id" method="post" data-confirm="حذف سابقه تحصیلی">
+                                        <button class="btn btn-sm btn-link text-danger" type="submit">حذف</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @foreach (var item in e.EducationRecords)
+            {
+                <div class="modal fade" id="education-edit-@item.Id" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form asp-action="EditEducation" asp-route-id="@e.Id" asp-route-educationId="@item.Id" method="post">
+                                <div class="modal-header">
+                                    <h2 class="modal-title fs-5">ویرایش سابقه تحصیلی</h2>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body row g-3">
+                                    <div><label class="form-label">مدرک</label><input name="degreeTitle" value="@item.DegreeTitle" class="form-control" /></div>
+                                    <div><label class="form-label">رشته</label><input name="fieldOfStudy" value="@item.FieldOfStudy" class="form-control" /></div>
+                                    <div><label class="form-label">مرکز</label><input name="institutionName" value="@item.InstitutionName" class="form-control" /></div>
+                                    <div><label class="form-label">فراغت</label><input name="graduationDate" value="@(item.GraduationDate.HasValue? PersianDate.Format(item.GraduationDate) : null)" class="form-control" data-jdp /></div>
+                                    <div class="form-check"><input name="isHighestDegree" value="true" type="checkbox" checked="@item.IsHighestDegree" class="form-check-input" /><label class="form-check-label">بالاترین مدرک</label></div>
+                                </div>
+                                <div class="modal-footer"><button class="btn btn-primary" type="submit">ذخیره</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </section>
+
+    <div class="modal fade" id="education-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="AddEducationFromView" asp-route-id="@e.Id" method="post">
+                    <div class="modal-header"><h2 class="modal-title fs-5">افزودن سابقه تحصیلی</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body row g-3">
+                        <div class="col-12"><label class="form-label">عنوان مدرک</label><input name="degreeTitle" class="form-control" /></div>
+                        <div class="col-12"><label class="form-label">رشته</label><input name="fieldOfStudy" class="form-control" /></div>
+                        <div class="col-12"><label class="form-label">مرکز آموزشی</label><input name="institutionName" class="form-control" /></div>
+                        <div class="col-12"><label class="form-label">تاریخ فراغت</label><input name="graduationDate" class="form-control" data-jdp /></div>
+                        <div class="col-12 form-check"><input name="isHighestDegree" value="true" type="checkbox" class="form-check-input" id="highest-degree" /><label for="highest-degree" class="form-check-label">بالاترین مدرک</label></div>
+                    </div>
+                    <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">انصراف</button><button class="btn btn-primary" type="submit">ثبت</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+else if (tab == "dependents")
+{
+    <section class="content-card">
+        <div class="card-heading">
+            <div><h2>افراد تحت تکفل</h2></div>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#dependent-modal">افزودن</button>
+        </div>
+
+        @if (e.Dependents.Count == 0)
+        {
+            <partial name="_EmptyState" model='@(new EmptyStateViewModel("فردی ثبت نشده", "اطلاعات افراد تحت تکفل را اضافه کنید.", "bi-people"))' />
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table data-table">
+                    <thead><tr><th>نام</th><th>نسبت</th><th>کد ملی</th><th>تولد</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var item in e.Dependents)
+                        {
+                            <tr>
+                                <td>
+                                    @item.FullName
+                                    @if (item.IsEmergencyContact)
+                                    {
+                                        <span class="status-badge status-warning">تماس اضطراری</span>
+                                    }
+                                </td>
+                                <td>@item.RelationshipTypeDisplayName</td>
+                                <td dir="ltr">@(item.NationalCode ?? "—")</td>
+                                <td>@PersianDate.Format(item.BirthDate)</td>
+                                <td class="table-actions">
+                                    <button class="btn btn-sm btn-link" type="button" data-bs-toggle="modal" data-bs-target="#dependent-edit-@item.Id">ویرایش</button>
+                                    <form asp-action="RemoveDependentFromView" asp-route-id="@e.Id" asp-route-dependentId="@item.Id" method="post" data-confirm="حذف فرد تحت تکفل">
+                                        <button class="btn btn-sm btn-link text-danger" type="submit">حذف</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @foreach (var item in e.Dependents)
+            {
+                <div class="modal fade" id="dependent-edit-@item.Id" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form asp-action="EditDependent" asp-route-id="@e.Id" asp-route-dependentId="@item.Id" method="post">
+                                <div class="modal-header"><h2 class="modal-title fs-5">ویرایش فرد تحت تکفل</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body row g-3">
+                                    <div><label class="form-label">نام</label><input name="fullName" value="@item.FullName" class="form-control" required /></div>
+                                    <div>
+                                        <label class="form-label">نسبت</label>
+                                        <select name="relationshipType" class="form-select">
+                                            @foreach (var relationship in lookups.DependentRelationshipTypes)
+                                            {
+                                                <option value="@relationship.Id" selected="@(relationship.Id == item.RelationshipTypeId)">@relationship.DisplayName</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div><label class="form-label">کد ملی</label><input name="nationalCode" value="@item.NationalCode" class="form-control" dir="ltr" /></div>
+                                    <div><label class="form-label">تولد</label><input name="birthDate" value="@(item.BirthDate.HasValue? PersianDate.Format(item.BirthDate) : null)" class="form-control" data-jdp /></div>
+                                    <div><label class="form-label">تلفن اضطراری</label><input name="emergencyPhone" value="@item.EmergencyPhone" class="form-control" dir="ltr" /></div>
+                                    <div class="form-check"><input name="isEmergencyContact" value="true" type="checkbox" checked="@item.IsEmergencyContact" class="form-check-input" /><label class="form-check-label">تماس اضطراری</label></div>
+                                </div>
+                                <div class="modal-footer"><button class="btn btn-primary" type="submit">ذخیره</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </section>
+
+    <div class="modal fade" id="dependent-modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form asp-action="AddDependentFromView" asp-route-id="@e.Id" method="post">
+                    <div class="modal-header"><h2 class="modal-title fs-5">افزودن فرد تحت تکفل</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body row g-3">
+                        <div class="col-12"><label class="form-label">نام و نام خانوادگی</label><input name="fullName" class="form-control" required /></div>
+                        <div class="col-6">
+                            <label class="form-label">نسبت</label>
+                            <select name="relationshipType" class="form-select">
+                                @foreach (var relationship in lookups.DependentRelationshipTypes)
+                                {
+                                    <option value="@relationship.Id">@relationship.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-6"><label class="form-label">کد ملی</label><input name="nationalCode" class="form-control" dir="ltr" /></div>
+                        <div class="col-6"><label class="form-label">تاریخ تولد</label><input name="birthDate" class="form-control" data-jdp /></div>
+                        <div class="col-6"><label class="form-label">تلفن اضطراری</label><input name="emergencyPhone" class="form-control" dir="ltr" /></div>
+                        <div class="col-12 form-check"><input name="isEmergencyContact" value="true" type="checkbox" class="form-check-input" id="emergency" /><label for="emergency" class="form-check-label">تماس اضطراری</label></div>
+                    </div>
+                    <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">انصراف</button><button class="btn btn-primary" type="submit">ثبت</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+else if (tab == "employment")
+{
+    <section class="content-card"><div class="card-heading"><div><h2>سوابق استخدام</h2></div><a class="btn btn-primary btn-sm" asp-controller="Employments" asp-action="Create" asp-route-employeeId="@e.Id">شروع استخدام</a></div>@if(Model.Employments.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("استخدامی ثبت نشده", "برای این کارمند سابقه استخدام وجود ندارد.", "bi-person-vcard")' />
+}
+else
+{
+
+    <div class="table-responsive"><table class="table data-table"><thead><tr><th>نوع</th><th>وضعیت</th><th>نوع کار</th><th>شروع</th><th>پایان</th><th></th></tr></thead><tbody>@foreach(var item in Model.Employments){
+    <tr><td>@item.EmploymentTypeName</td><td>@item.EmploymentStatusName</td><td>@(item.WorkTimeTypeName ?? "—")</td><td>@PersianDate.Format(item.StartDate)</td><td>@PersianDate.Format(item.EndDate)</td><td><a class="btn btn-sm btn-outline-dark" asp-controller="Employments" asp-action="Details" asp-route-id="@item.Id">جزئیات</a></td></tr>
+}
+</tbody></table></div>
+}
+</section>
+} else
+{
+    <div class="detail-grid">
+        <section class="content-card"><div class="card-heading"><h2>دارایی‌های واگذارشده</h2><a asp-controller="Assets" asp-action="Index" asp-route-employeeId="@e.Id">مدیریت دارایی‌ها</a></div>@if(Model.Assets.Count==0){
+        <partial name="_EmptyState" model='new EmptyStateViewModel("دارایی جاری ندارد", "دارایی فعالی به این کارمند واگذار نشده است.", "bi-phone")' />
+    }else
+    {
+
+        <div class="compact-list">@foreach(var item in Model.Assets){
+        <a asp-controller="Assets" asp-action="Details" asp-route-id="@item.Id"><span class="list-avatar"><i class="bi bi-phone"></i></span><span><strong>@item.AssetTypeName</strong><small>@(item.AssetTag ?? item.SerialNumber ?? item.ServiceNumber ?? "بدون شناسه")</small></span><span>@DisplayNames.AssetStatuses(item.Status)</span></a>
+    }
+</div>
+        }
+</section>
+    <section class="content-card"><div class="card-heading"><h2>برنامه‌های کاری</h2></div>@if(Model.ScheduleAssignments.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("برنامه کاری ندارد", "برنامه کاری از جزئیات استخدام قابل تخصیص است.", "bi-calendar3")' />
+        }else
+    {
+
+        <div class="compact-list">@foreach(var item in Model.ScheduleAssignments){
+        <div><span class="list-avatar"><i class="bi bi-calendar-check"></i></span><span><strong>@item.WorkScheduleName</strong><small>از @PersianDate.Format(item.EffectiveFrom) تا @PersianDate.Format(item.EffectiveTo)</small></span><span class="status-badge @(item.IsCurrent ? "status-active" : "status-inactive")">@(item.IsCurrent ? "جاری" : "پایان‌یافته")</span></div>
+    }
+</div>
+        }
+</section>
+</div>
+}

@@ -1,5 +1,5 @@
-﻿using HrPanel.UI.Models.Shared;
-using HrPanel.UI.Ui;
+﻿using HrPanel.UI.Common.Constants;
+using HrPanel.UI.Models.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;

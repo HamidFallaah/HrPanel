@@ -1,0 +1,23 @@
+﻿@using HrPanel.UI.Common.Constants
+@using HrPanel.UI.Common.Formatting
+@model WorkScheduleDetailsDto
+@{
+    var lookups = (SchedulingLookupsDto)ViewBag.Lookups; ViewData[ViewDataKeys.Title] = Model.NameFa; ViewData[ViewDataKeys.PageTitle] = "جزئیات برنامه کاری";
+}
+<partial name="_SchedulingTabs" />
+<section class="profile-hero content-card"><div class="profile-identity"><span class="profile-avatar"><i class="bi bi-calendar3"></i></span><div><h1>@Model.NameFa</h1><p>@Model.Code · چرخه @Model.CycleLengthDays روزه · مبنا @PersianDate.Format(Model.AnchorDate)</p></div></div><div class="profile-actions"><a class="btn btn-outline-dark" asp-action="EditSchedule" asp-route-id="@Model.Id">ویرایش</a><form asp-action="ScheduleStatus" asp-route-id="@Model.Id" method="post"><input type="hidden" name="isActive" value="@(Model.IsActive ? "false" : "true")" /><button class="btn btn-outline-dark">@(Model.IsActive ? "غیرفعال‌کردن" : "فعال‌کردن")</button></form></div></section>
+<section class="content-card"><div class="card-heading"><div><h2>روزهای چرخه</h2><p>برای هر شماره روز، یک شیفت یا استراحت تعیین کنید.</p></div><button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#day-modal">تنظیم روز</button></div>@if(Model.Days.Count==0){
+<partial name="_EmptyState" model='new EmptyStateViewModel("چرخه هنوز خالی است", "روزهای چرخه را متناسب با طول برنامه اضافه کنید.", "bi-calendar-plus")' />
+}else
+{
+
+    <div class="cycle-grid">@foreach(var x in Model.Days.OrderBy(x=>x.DayIndex)){
+    <article><span>روز <b data-persian-number>@x.DayIndex</b></span><strong>@(x.IsRestDay ? "استراحت" : x.ShiftName ?? "بدون شیفت")</strong><form asp-action="RemoveDay" asp-route-id="@Model.Id" asp-route-dayIndex="@x.DayIndex" method="post" data-confirm="حذف روز برنامه"><button class="btn btn-sm btn-link text-danger">حذف</button></form></article>
+}
+</div>
+}
+</section>
+<div class="modal fade" id="day-modal"><div class="modal-dialog"><div class="modal-content"><form asp-action="SetDay" asp-route-id="@Model.Id" method="post"><div class="modal-header"><h2 class="modal-title fs-5">تنظیم روز چرخه</h2><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><label class="form-label">شماره روز</label><input name="dayIndex" type="number" min="1" max="@Model.CycleLengthDays" class="form-control mb-3" required /><label class="form-label">شیفت</label><select name="shiftId" class="form-select mb-3"><option value="">بدون انتخاب</option>@foreach(var x in lookups.Shifts){
+<option value="@x.Id">@x.DisplayName</option>
+}
+</select><div class="form-check"><input name="isRestDay" value="true" class="form-check-input" type="checkbox" id="rest-day" /><label for="rest-day">روز استراحت</label></div></div><div class="modal-footer"><button class="btn btn-primary">ذخیره</button></div></form></div></div></div>

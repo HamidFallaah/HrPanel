@@ -1,0 +1,95 @@
+﻿@model HrPanel.Application.Dtos.Dashboard.DashboardDto
+@using System.Text.Json
+@using HrPanel.UI.Common.Constants
+@using HrPanel.UI.Common.Formatting
+@{
+    ViewData[ViewDataKeys.Title] = "داشبورد"; ViewData[ViewDataKeys.PageTitle] = "داشبورد منابع انسانی"; ViewData[ViewDataKeys.PageDescription] = "نمای لحظه‌ای از وضعیت کارکنان، استخدام و دارایی ‌های سازمان";
+}
+<div class="metric-grid">
+    <article class="metric-card"><span class="metric-icon bg-yellow"><i class="bi bi-people"></i></span><div><span>کل کارکنان</span><strong data-persian-number>@Model.TotalEmployees</strong></div></article>
+    <article class="metric-card"><span class="metric-icon bg-success-soft"><i class="bi bi-person-check"></i></span><div><span>کارکنان فعال</span><strong data-persian-number>@Model.ActiveEmployees</strong></div></article>
+    <article class="metric-card"><span class="metric-icon bg-secondary-soft"><i class="bi bi-person-dash"></i></span><div><span>کارکنان غیرفعال</span><strong data-persian-number>@Model.InactiveEmployees</strong></div></article>
+    <article class="metric-card"><span class="metric-icon bg-info-soft"><i class="bi bi-person-plus"></i></span><div><span>افزوده‌شده در ۳۰ روز</span><strong data-persian-number>@Model.NewEmployeesLast30Days</strong></div></article>
+</div>
+<div class="dashboard-grid mt-4">
+    <section class="content-card"><div class="card-heading"><div><h2>وضعیت استخدام‌های جاری</h2><p>توزیع بر اساس وضعیت ثبت‌شده</p></div></div>@if(Model.EmploymentStatuses.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("بدون داده استخدام", "هنوز استخدام جاری ثبت نشده است", "bi-bar-chart")' />
+    }
+       else
+    {
+
+        <div class="chart-wrap"><canvas id="employment-chart" aria-label="نمودار وضعیت استخدام"></canvas></div>
+    }
+</section>
+    <section class="content-card"><div class="card-heading"><div><h2>وضعیت دارایی‌ها</h2><p>دارایی‌های ثبت‌شده در سامانه</p></div></div>@if(Model.AssetStatuses.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("بدون داده دارایی", "هنوز دارایی‌ای ثبت نشده است", "bi-pie-chart")' />
+    }
+        else
+    {
+
+        <div class="chart-wrap"><canvas id="asset-chart" aria-label="نمودار وضعیت دارایی"></canvas></div>
+    }
+</section>
+</div>
+<div class="dashboard-grid mt-4">
+    <section class="content-card"><div class="card-heading"><div><h2>نوع استخدام کارکنان جاری</h2><p>ترکیب قراردادهای فعال</p></div></div>@if(Model.EmploymentTypes.Count==0){
+    <partial name="_EmptyState" model='new EmptyStateViewModel("بدون داده استخدام", "برای نمایش نمودار، استخدام جاری ثبت کنید", "bi-pie-chart")' />
+    }
+        else
+    {
+
+        <div class="chart-wrap"><canvas id="employment-type-chart" aria-label="نمودار نوع استخدام"></canvas></div>
+    }
+</section>
+    <section class="content-card"><div class="card-heading"><div><h2>دسترسی‌های سریع</h2><p>عملیات پرکاربرد واحد منابع انسانی</p></div></div><div class="quick-action-grid"><a asp-controller="Employees" asp-action="Create"><i class="bi bi-person-plus"></i><span>ثبت کارمند جدید</span></a><a asp-controller="Employees" asp-action="Index"><i class="bi bi-people"></i><span>لیست کارکنان</span></a><a asp-controller="Employments" asp-action="Create"><i class="bi bi-person-vcard"></i><span>شروع استخدام</span></a><a asp-controller="Assets" asp-action="Index"><i class="bi bi-phone"></i><span>تخصیص دارایی</span></a><a asp-controller="Organization" asp-action="Units"><i class="bi bi-diagram-3"></i><span>ساختار سازمانی</span></a><a asp-controller="Scheduling" asp-action="Schedules"><i class="bi bi-calendar3"></i><span>برنامه کاری</span></a></div></section>
+</div>
+<div class="dashboard-grid mt-4">
+    <section class="content-card"><div class="card-heading"><h2>واحدهای سازمانی پرتعداد</h2></div><div class="rank-list">@foreach(var item in Model.OrganizationUnits){
+    <div><span>@item.Label</span><strong data-persian-number>@item.Value</strong></div>
+        }
+</div></section>
+    <section class="content-card"><div class="card-heading"><h2>محل‌های کاری پرتعداد</h2></div><div class="rank-list">@foreach(var item in Model.WorkLocations){
+    <div><span>@item.Label</span><strong data-persian-number>@item.Value</strong></div>
+        }
+</div></section>
+</div>
+<div class="dashboard-grid mt-4">
+    <section class="content-card">
+        <div class="card-heading"><div><h2>موارد نیازمند توجه</h2><p>موارد عملیاتی که بهتر است بررسی شوند</p></div></div><div class="attention-list">
+            <a asp-controller="Employees" asp-action="Index"><span>کارکنان فعال بدون استخدام جاری</span><strong data-persian-number>@Model.EmployeesWithoutCurrentEmployment</strong></a>
+            <a asp-controller="Employments" asp-action="Index" asp-route-isCurrent="true"><span>استخدام جاری بدون تخصیص منابع انسانی</span><strong data-persian-number>@Model.EmploymentsWithoutHrAssignment</strong></a>
+            <a asp-controller="Assets" asp-action="Index" asp-route-status="5"><span>دارایی مفقود</span><strong data-persian-number>@Model.LostAssets</strong></a>
+            <a asp-controller="Assets" asp-action="Index" asp-route-status="3"><span>دارایی در تعمیر</span><strong data-persian-number>@Model.AssetsUnderMaintenance</strong></a>
+        </div>
+    </section>
+    <section class="content-card">
+        <div class="card-heading"><div><h2>آخرین تغییرات کارکنان</h2><p>جدیدترین سوابق ایجاد یا ویرایش‌شده</p></div><a asp-controller="Employees" asp-action="Index">مشاهده همه</a></div>
+        @if (Model.RecentEmployees.Count == 0)
+        {
+            <partial name="_EmptyState" model='new EmptyStateViewModel("بدون سابقه", "هنوز کارمندی ثبت نشده است", "bi-people")' />
+        }
+        else
+        {
+
+            <div class="compact-list">@foreach (var item in Model.RecentEmployees) {
+            <a asp-controller="Employees" asp-action="Details" asp-route-id="@item.Id"><span class="list-avatar">@item.DisplayName.First()</span><span><strong>@item.DisplayName</strong><small>@item.EmployeeNumber · @PersianDate.Format(item.ChangedAt)</small></span><span class="status-dot @(item.IsActive ? "is-active" : "")"></span></a>
+        }
+</div>
+                }
+    </section>
+</div>
+@section Scripts 
+{
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script>
+        (() => {
+         const employment = @Html.Raw(JsonSerializer.Serialize(Model.EmploymentStatuses));
+         const assets = @Html.Raw(JsonSerializer.Serialize(Model.AssetStatuses));
+         const employmentTypes = @Html.Raw(JsonSerializer.Serialize(Model.EmploymentTypes));
+         const colors = ['#f8c900','#343a40','#6c757d','#20a36a','#3b82f6','#ef6c57','#8b5cf6','#14b8a6'];
+         const toFa = (value) => String(value ?? '').replace(/\d/g, digit => '۰۱۲۳۴۵۶۷۸۹'[Number(digit)]);
+         const draw = (id, data, type) => { const node=document.getElementById(id); if(!node || !window.Chart) return; new Chart(node,{type,data:{labels:data.map(x=>x.Label),datasets:[{data:data.map(x=>x.Value),backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',rtl:true,labels:{font:{family:'Vazirmatn'}}},tooltip:{rtl:true,callbacks:{label:(context)=>`${context.label}: ${toFa(context.raw)}`}}},scales:type==='bar'?{y:{beginAtZero:true,ticks:{callback:toFa}}}:undefined}}); };
+         draw('employment-chart', employment, 'bar'); draw('asset-chart', assets, 'doughnut'); draw('employment-type-chart', employmentTypes, 'doughnut');
+        })();
+    </script>
+}
