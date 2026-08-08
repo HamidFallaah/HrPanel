@@ -15,7 +15,7 @@
 {
 
     <div class="asset-grid">@foreach(var x in Model.Items){
-    <article class="asset-card"><div class="asset-card-top"><span class="metric-icon bg-yellow"><i class="bi bi-phone"></i></span><span class="status-badge status-@x.Status.ToString().ToLowerInvariant()">@DisplayNames.AssetStatus(x.Status)</span></div><h2>@x.AssetTypeName</h2><dl><div><dt>برچسب</dt><dd>@(x.AssetTag ?? "—")</dd></div><div><dt>سریال / IMEI</dt><dd dir="ltr">@(x.SerialNumber ?? x.Imei ?? "—")</dd></div><div><dt>دارنده</dt><dd>@(x.AssignedEmployeeName ?? "—")</dd></div></dl><a class="btn btn-outline-dark w-100" asp-action="Details" asp-route-id="@x.Id">مشاهده جزئیات</a></article>
+    <article class="asset-card"><div class="asset-card-top"><span class="metric-icon bg-yellow"><i class="bi bi-phone"></i></span><span class="status-badge status-@x.Status.ToString().ToLowerInvariant()">@DisplayNames.AssetStatuses(x.Status)</span></div><h2>@x.AssetTypeName</h2><dl><div><dt>برچسب</dt><dd>@(x.AssetTag ?? "—")</dd></div><div><dt>سریال / IMEI</dt><dd dir="ltr">@(x.SerialNumber ?? x.Imei ?? "—")</dd></div><div><dt>دارنده</dt><dd>@(x.AssignedEmployeeName ?? "—")</dd></div></dl><a class="btn btn-outline-dark w-100" asp-action="Details" asp-route-id="@x.Id">مشاهده جزئیات</a></article>
 }
 </div>
 }

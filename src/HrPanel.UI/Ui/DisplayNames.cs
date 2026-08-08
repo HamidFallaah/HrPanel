@@ -6,13 +6,13 @@ using HrPanel.Domain.Scheduling;
 namespace HrPanel.UI.Ui;
 public static class DisplayNames
 {
-    public static string AssetStatus(AssetStatus status) => status switch
+    public static string AssetStatuses(AssetStatus status) => status switch
     {
-        HrPanel.Domain.Assets.AssetStatus.Available => "آماده واگذاری",
-        HrPanel.Domain.Assets.AssetStatus.Assigned => "واگذارشده",
-        HrPanel.Domain.Assets.AssetStatus.UnderMaintenance => "در تعمیر",
-        HrPanel.Domain.Assets.AssetStatus.Retired => "از رده خارج",
-        HrPanel.Domain.Assets.AssetStatus.Lost => "مفقود",
+        AssetStatus.Available => "آماده واگذاری",
+        AssetStatus.Assigned => "واگذارشده",
+        AssetStatus.UnderMaintenance => "در تعمیر",
+        AssetStatus.Retired => "از رده خارج",
+        AssetStatus.Lost => "مفقود",
         _ => status.ToString()
     };
 
@@ -37,23 +37,23 @@ public static class DisplayNames
         _ => context.ToString()
     };
 
-    public static string RelationshipType(RelationshipType type) => type switch
+    public static string RelationshipTypes(RelationshipType type) => type switch
     {
-        HrPanel.Domain.Employment.RelationshipType.Manager => "مدیر",
-        HrPanel.Domain.Employment.RelationshipType.Supervisor => "سرپرست",
-        HrPanel.Domain.Employment.RelationshipType.QualityAssurance => "تضمین کیفیت",
-        HrPanel.Domain.Employment.RelationshipType.SeniorManager => "مدیر ارشد",
-        HrPanel.Domain.Employment.RelationshipType.ManagerLevel2 => "مدیر سطح دو",
-        HrPanel.Domain.Employment.RelationshipType.ManagerLevel3 => "مدیر سطح سه",
-        HrPanel.Domain.Employment.RelationshipType.ManagerLevel4 => "مدیر سطح چهار",
+        RelationshipType.Manager => "مدیر",
+        RelationshipType.Supervisor => "سرپرست",
+        RelationshipType.QualityAssurance => "تضمین کیفیت",
+        RelationshipType.SeniorManager => "مدیر ارشد",
+        RelationshipType.ManagerLevel2 => "مدیر سطح دو",
+        RelationshipType.ManagerLevel3 => "مدیر سطح سه",
+        RelationshipType.ManagerLevel4 => "مدیر سطح چهار",
         _ => type.ToString()
     };
 
-    public static string RelationshipContext(RelationshipContext context) => context switch
+    public static string RelationshipContexts(RelationshipContext context) => context switch
     {
-        HrPanel.Domain.Employment.RelationshipContext.General => "عمومی",
-        HrPanel.Domain.Employment.RelationshipContext.Hr => "منابع انسانی",
-        HrPanel.Domain.Employment.RelationshipContext.Cr => "عملیاتی",
+        RelationshipContext.General => "عمومی",
+        RelationshipContext.Hr => "منابع انسانی",
+        RelationshipContext.Cr => "عملیاتی",
         _ => context.ToString()
     };
 }

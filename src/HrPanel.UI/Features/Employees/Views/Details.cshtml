@@ -320,7 +320,7 @@ else
     {
 
         <div class="compact-list">@foreach(var item in Model.Assets){
-        <a asp-controller="Assets" asp-action="Details" asp-route-id="@item.Id"><span class="list-avatar"><i class="bi bi-phone"></i></span><span><strong>@item.AssetTypeName</strong><small>@(item.AssetTag ?? item.SerialNumber ?? item.ServiceNumber ?? "بدون شناسه")</small></span><span>@DisplayNames.AssetStatus(item.Status)</span></a>
+        <a asp-controller="Assets" asp-action="Details" asp-route-id="@item.Id"><span class="list-avatar"><i class="bi bi-phone"></i></span><span><strong>@item.AssetTypeName</strong><small>@(item.AssetTag ?? item.SerialNumber ?? item.ServiceNumber ?? "بدون شناسه")</small></span><span>@DisplayNames.AssetStatuses(item.Status)</span></a>
     }
 </div>
         }

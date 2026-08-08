@@ -3,7 +3,7 @@
 @{
     var employees = (IReadOnlyCollection<EmployeeListItemDto>)ViewBag.Employees; ViewData[ViewDataKeys.Title] = Model.AssetTypeName; ViewData[ViewDataKeys.PageTitle] = "جزئیات دارایی"; var active = Model.Assignments.FirstOrDefault(x => x.IsActive);
 }
-<section class="profile-hero content-card"><div class="profile-identity"><span class="profile-avatar"><i class="bi bi-phone"></i></span><div><div class="d-flex align-items-center gap-2"><h1>@Model.AssetTypeName</h1><span class="status-badge">@DisplayNames.AssetStatus(Model.Status)</span></div><p>@(Model.AssetTag ?? Model.SerialNumber ?? Model.Imei ?? "بدون شناسه نمایشی")</p></div></div><div class="profile-actions"><a class="btn btn-outline-dark" asp-action="Edit" asp-route-id="@Model.Id">ویرایش</a>@if(Model.Status==AssetStatus.Available){
+<section class="profile-hero content-card"><div class="profile-identity"><span class="profile-avatar"><i class="bi bi-phone"></i></span><div><div class="d-flex align-items-center gap-2"><h1>@Model.AssetTypeName</h1><span class="status-badge">@DisplayNames.AssetStatuses(Model.Status)</span></div><p>@(Model.AssetTag ?? Model.SerialNumber ?? Model.Imei ?? "بدون شناسه نمایشی")</p></div></div><div class="profile-actions"><a class="btn btn-outline-dark" asp-action="Edit" asp-route-id="@Model.Id">ویرایش</a>@if(Model.Status==AssetStatus.Available){
 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assign-modal">واگذاری</button>
 }
 @if (Model.Status == AssetStatus.Assigned)
